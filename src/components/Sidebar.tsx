@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
@@ -52,6 +52,7 @@ const SidebarLink = ({
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const location = useLocation();
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -61,6 +62,13 @@ const Sidebar = () => {
     if (isMobile) {
       setIsOpen(false);
     }
+  };
+
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return location.pathname === path;
+    }
+    return location.pathname.startsWith(path);
   };
 
   return (
@@ -119,31 +127,35 @@ const Sidebar = () => {
                 href="/"
                 icon={<LayoutDashboard className="h-5 w-5" />}
                 label="Dashboard"
-                isActive={true}
+                isActive={isActive("/")}
                 onClick={closeSidebar}
               />
               <SidebarLink
                 href="/accounts"
                 icon={<CreditCard className="h-5 w-5" />}
                 label="Accounts"
+                isActive={isActive("/accounts")}
                 onClick={closeSidebar}
               />
               <SidebarLink
                 href="/transfers"
                 icon={<Send className="h-5 w-5" />}
                 label="Transfers"
+                isActive={isActive("/transfers")}
                 onClick={closeSidebar}
               />
               <SidebarLink
                 href="/savings"
                 icon={<PiggyBank className="h-5 w-5" />}
                 label="Savings"
+                isActive={isActive("/savings")}
                 onClick={closeSidebar}
               />
               <SidebarLink
                 href="/insights"
                 icon={<BarChart2 className="h-5 w-5" />}
                 label="Insights"
+                isActive={isActive("/insights")}
                 onClick={closeSidebar}
               />
             </div>
@@ -156,18 +168,21 @@ const Sidebar = () => {
                 href="/help"
                 icon={<HelpCircle className="h-5 w-5" />}
                 label="Help Center"
+                isActive={isActive("/help")}
                 onClick={closeSidebar}
               />
               <SidebarLink
                 href="/chat"
                 icon={<MessageSquare className="h-5 w-5" />}
                 label="Financial Assistant"
+                isActive={isActive("/chat")}
                 onClick={closeSidebar}
               />
               <SidebarLink
                 href="/notifications"
                 icon={<Bell className="h-5 w-5" />}
                 label="Notifications"
+                isActive={isActive("/notifications")}
                 onClick={closeSidebar}
               />
             </div>
@@ -179,6 +194,7 @@ const Sidebar = () => {
               href="/settings"
               icon={<Settings className="h-5 w-5" />}
               label="Settings"
+              isActive={isActive("/settings")}
               onClick={closeSidebar}
             />
             <div className="mt-4 border-t border-sidebar-border pt-4">
