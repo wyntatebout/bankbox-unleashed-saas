@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,24 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Banking theme colors
+				bank: {
+					primary: '#1A73E8',
+					secondary: '#34A853',
+					accent: '#00C2FF',
+					warning: '#FBBC05',
+					error: '#EA4335',
+					success: '#0F9D58',
+					dark: '#1E293B',
+					light: '#F8FAFC',
+					card: {
+						bg: '#FFFFFF',
+						border: '#E2E8F0'
+					},
+					gradient: {
+						primary: 'linear-gradient(135deg, #1A73E8 0%, #6C92F4 100%)',
+					}
 				}
 			},
 			borderRadius: {
@@ -84,11 +103,22 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					from: {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					to: {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out'
 			}
 		}
 	},
