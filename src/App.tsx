@@ -10,6 +10,13 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
+import Accounts from "./pages/Accounts";
+import Transfers from "./pages/Transfers";
+import Savings from "./pages/Savings";
+import Insights from "./pages/Insights";
+import HelpCenter from "./pages/HelpCenter";
+import Chat from "./pages/Chat";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +45,13 @@ const AuthWrapper = () => {
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="accounts" element={<Accounts />} />
+        <Route path="transfers" element={<Transfers />} />
+        <Route path="savings" element={<Savings />} />
+        <Route path="insights" element={<Insights />} />
+        <Route path="help" element={<HelpCenter />} />
+        <Route path="chat" element={<Chat />} />
+        <Route path="notifications" element={<Notifications />} />
       </Route>
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
