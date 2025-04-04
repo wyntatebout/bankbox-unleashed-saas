@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import UserAvatar from "@/components/UserAvatar";
 import {
   LayoutDashboard,
   CreditCard,
@@ -13,10 +12,9 @@ import {
   Settings,
   Menu,
   X,
-  LogOut,
-  Bell,
   HelpCircle,
   MessageSquare,
+  Bell,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -184,23 +182,7 @@ const Sidebar = () => {
               onClick={closeSidebar}
             />
             <div className="mt-4 border-t border-sidebar-border pt-4">
-              <div className="flex items-center gap-3 px-4 py-2">
-                <Avatar className="h-8 w-8 border-2 border-white">
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-white">
-                    John Doe
-                  </span>
-                  <span className="text-xs text-sidebar-foreground/70">
-                    john@example.com
-                  </span>
-                </div>
-                <Button variant="ghost" size="icon" className="ml-auto">
-                  <LogOut className="h-4 w-4 text-sidebar-foreground" />
-                </Button>
-              </div>
+              <UserAvatar />
             </div>
           </div>
         </div>
