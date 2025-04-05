@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +11,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
+import { generateBankStatement, StatementTemplate } from "../utils/statementGenerator";
 
 const Accounts = () => {
   const { toast } = useToast();
@@ -23,13 +23,13 @@ const Accounts = () => {
     period: string;
     generatedDate: string;
     downloadUrl: string;
-    type: string;
+    type: StatementTemplate;
   }[]>([]);
   
   // State for statement generator
   const [statementDate, setStatementDate] = useState<Date | undefined>(new Date());
   const [selectedAccount, setSelectedAccount] = useState("ch1");
-  const [selectedTemplate, setSelectedTemplate] = useState("modern");
+  const [selectedTemplate, setSelectedTemplate] = useState<StatementTemplate>("modern");
   const [includeAccountNumbers, setIncludeAccountNumbers] = useState(true);
   const [passwordProtect, setPasswordProtect] = useState(false);
   const [statementPassword, setStatementPassword] = useState("");
@@ -37,6 +37,8 @@ const Accounts = () => {
   const [filterAmount, setFilterAmount] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
   const [viewingAccountId, setViewingAccountId] = useState<string | null>(null);
+  const [includeWatermark, setIncludeWatermark] = useState(false);
+  const [watermarkText, setWatermarkText] = useState("CONFIDENTIAL");
   
   // Templates for the bank statements
   const templates = [
@@ -217,6 +219,15 @@ const Accounts = () => {
     let transactions = generateTransactions(statement.accountId, 100);
     const account = Object.values(accounts).flat().find(a => a.id === statement.accountId);
     
+    if (!account) {
+      toast({
+        title: "Error",
+        description: "Account not found.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Apply filters if we're in the preview mode
     if (filterCategory !== "all") {
       transactions = transactions.filter(tx => tx.category === filterCategory);
@@ -227,44 +238,21 @@ const Accounts = () => {
       transactions = transactions.filter(tx => Math.abs(tx.amount) >= amount);
     }
     
-    // Create CSV content with the template information
-    let csvContent = "BANK STATEMENT\n";
-    csvContent += `Template: ${statement.type}\n`;
-    csvContent += `Account: ${account?.name}\n`;
-    csvContent += `Period: ${statement.period}\n`;
-    csvContent += `Generated: ${statement.generatedDate}\n\n`;
-    
-    if (includeAccountNumbers && account) {
-      csvContent += `Account Number: ${account.accountNumber}\n\n`;
-    }
-    
-    csvContent += "Date,Description,Category,Amount,Balance\n";
-    transactions.forEach(tx => {
-      csvContent += `${tx.date},"${tx.description}","${tx.category}",${tx.amount.toFixed(2)},${tx.balance.toFixed(2)}\n`;
+    // Generate the PDF with our utility
+    const pdfDoc = generateBankStatement({
+      template: statement.type,
+      account,
+      period: statement.period,
+      includeAccountNumbers,
+      transactions,
+      passwordProtect,
+      password: statementPassword,
+      watermark: includeWatermark ? watermarkText : undefined
     });
     
-    // Add summary section
-    const deposits = transactions.filter(tx => tx.amount > 0);
-    const withdrawals = transactions.filter(tx => tx.amount < 0);
-    const totalDeposits = deposits.reduce((sum, tx) => sum + tx.amount, 0);
-    const totalWithdrawals = withdrawals.reduce((sum, tx) => sum + tx.amount, 0);
-    
-    csvContent += "\nSUMMARY\n";
-    csvContent += `Opening Balance,${transactions[0].balance - transactions[0].amount}\n`;
-    csvContent += `Total Deposits,${totalDeposits.toFixed(2)}\n`;
-    csvContent += `Total Withdrawals,${totalWithdrawals.toFixed(2)}\n`;
-    csvContent += `Closing Balance,${transactions[transactions.length - 1].balance}\n`;
-    
-    // Create a blob and download it
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${account?.name.replace(/\s+/g, '_')}_statement_${statement.period.replace(/\s+/g, '_')}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Save the PDF
+    const filename = `${account.name.replace(/\s+/g, '_')}_statement_${statement.period.replace(/\s+/g, '_')}.pdf`;
+    pdfDoc.save(filename);
     
     toast({
       title: "Statement Downloaded",
@@ -564,7 +552,7 @@ const Accounts = () => {
                       <Card 
                         key={template.id}
                         className={`cursor-pointer border-2 transition-all ${selectedTemplate === template.id ? 'border-primary' : 'border-muted hover:border-muted-foreground/50'}`}
-                        onClick={() => setSelectedTemplate(template.id)}
+                        onClick={() => setSelectedTemplate(template.id as StatementTemplate)}
                       >
                         <CardContent className="p-4 text-center">
                           <div className={`mb-2 mx-auto rounded-md h-20 w-full flex items-center justify-center ${
@@ -597,6 +585,31 @@ const Accounts = () => {
                         Include account numbers
                       </label>
                     </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="include-watermark" 
+                        checked={includeWatermark}
+                        onCheckedChange={(checked) => setIncludeWatermark(checked === true)} 
+                      />
+                      <label
+                        htmlFor="include-watermark"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Add watermark
+                      </label>
+                    </div>
+                    
+                    {includeWatermark && (
+                      <div>
+                        <Input
+                          placeholder="Watermark text"
+                          value={watermarkText}
+                          onChange={(e) => setWatermarkText(e.target.value)}
+                          className="mt-2"
+                        />
+                      </div>
+                    )}
                   </div>
                   
                   <div className="space-y-4">
