@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -469,7 +468,7 @@ const Accounts = () => {
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <CalendarComponent
-                          mode="default"
+                          mode="single"
                           selected={statementDate}
                           onSelect={setStatementDate}
                           initialFocus
