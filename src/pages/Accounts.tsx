@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, CreditCard, Wallet, PiggyBank, FileText, ArrowDownToLine, Calendar, Filter, Settings, Eye, EyeOff, Lock } from "lucide-react";
+import { PlusCircle, CreditCard, Wallet, PiggyBank, FileText, ArrowDownToLine, Calendar, Filter, Settings, Eye, EyeOff, Lock, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,7 +26,6 @@ const Accounts = () => {
     type: StatementTemplate;
   }[]>([]);
   
-  // State for statement generator
   const [statementDate, setStatementDate] = useState<Date | undefined>(new Date());
   const [selectedAccount, setSelectedAccount] = useState("ch1");
   const [selectedTemplate, setSelectedTemplate] = useState<StatementTemplate>("modern");
@@ -40,7 +39,6 @@ const Accounts = () => {
   const [includeWatermark, setIncludeWatermark] = useState(false);
   const [watermarkText, setWatermarkText] = useState("CONFIDENTIAL");
   
-  // Templates for the bank statements
   const templates = [
     { id: "modern", name: "Modern (White)" },
     { id: "classic", name: "Classic (Formal)" },
@@ -48,7 +46,6 @@ const Accounts = () => {
     { id: "branded", name: "Branded (Full Color)" }
   ];
 
-  // Mock account data
   const accounts = {
     checking: [
       { id: "ch1", name: "Primary Checking", balance: 5430.28, accountNumber: "****4567" },
@@ -64,7 +61,6 @@ const Accounts = () => {
     ]
   };
 
-  // Generate mock transactions for statement
   const generateTransactions = (accountId: string, count: number) => {
     const transactions = [];
     const startDate = new Date(2025, 2, 1); // March 1, 2025
@@ -91,14 +87,12 @@ const Accounts = () => {
         description,
         category,
         amount,
-        balance: 0, // Will be calculated later
+        balance: 0,
       });
     }
     
-    // Sort by date
     transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
-    // Calculate running balance
     let balance = accountId.startsWith("ch") 
       ? 4000 + Math.random() * 1000 
       : accountId.startsWith("sv") 
@@ -123,10 +117,8 @@ const Accounts = () => {
   const handleViewDetails = (accountId: string) => {
     setViewingAccountId(accountId);
     
-    // Set active tab to statements
     setActiveTab("statements");
     
-    // Generate a sample statement for this account if one doesn't exist
     const hasExistingStatement = statements.some(s => s.accountId === accountId);
     
     if (!hasExistingStatement) {
@@ -144,7 +136,7 @@ const Accounts = () => {
           type: "modern"
         };
         
-        setStatements(prev => [...prev, newStatement]);
+        setStatements(prevStatements => [...prevStatements, newStatement]);
         
         toast({
           title: "Statement Generated",
@@ -166,7 +158,6 @@ const Accounts = () => {
     
     setIsGeneratingStatement(true);
     
-    // Simulate generating a statement
     setTimeout(() => {
       const selectedAccountObj = Object.values(accounts)
         .flat()
@@ -190,10 +181,10 @@ const Accounts = () => {
         period: month,
         generatedDate: new Date().toLocaleDateString(),
         downloadUrl: "#",
-        type: selectedTemplate
+        type: selectedTemplate as StatementTemplate
       };
       
-      setStatements([...statements, newStatement]);
+      setStatements(prevStatements => [...prevStatements, newStatement]);
       setIsGeneratingStatement(false);
       
       toast({
@@ -201,21 +192,17 @@ const Accounts = () => {
         description: `Your ${month} statement is ready for download.`,
       });
       
-      // Reset some form fields
       setPasswordProtect(false);
       setStatementPassword("");
       
-      // Auto-switch to statements tab
       setActiveTab("statements");
     }, 1500);
   };
   
   const handleDownloadStatement = (statementId: string) => {
-    // Find the statement
     const statement = statements.find(s => s.id === statementId);
     if (!statement) return;
     
-    // Generate the statement content
     let transactions = generateTransactions(statement.accountId, 100);
     const account = Object.values(accounts).flat().find(a => a.id === statement.accountId);
     
@@ -228,7 +215,6 @@ const Accounts = () => {
       return;
     }
     
-    // Apply filters if we're in the preview mode
     if (filterCategory !== "all") {
       transactions = transactions.filter(tx => tx.category === filterCategory);
     }
@@ -238,7 +224,6 @@ const Accounts = () => {
       transactions = transactions.filter(tx => Math.abs(tx.amount) >= amount);
     }
     
-    // Generate the PDF with our utility
     const pdfDoc = generateBankStatement({
       template: statement.type,
       account,
@@ -250,9 +235,20 @@ const Accounts = () => {
       watermark: includeWatermark ? watermarkText : undefined
     });
     
-    // Save the PDF
     const filename = `${account.name.replace(/\s+/g, '_')}_statement_${statement.period.replace(/\s+/g, '_')}.pdf`;
-    pdfDoc.save(filename);
+    
+    if (passwordProtect && statementPassword) {
+      pdfDoc.output('save', { 
+        filename: filename, 
+        encryption: {
+          userPassword: statementPassword,
+          ownerPassword: statementPassword,
+          userPermissions: ["print", "modify", "copy", "annot-forms"]
+        }
+      });
+    } else {
+      pdfDoc.save(filename);
+    }
     
     toast({
       title: "Statement Downloaded",
@@ -264,7 +260,6 @@ const Accounts = () => {
     setPreviewMode(!previewMode);
   };
 
-  // Filter statements based on viewing account
   const filteredStatements = viewingAccountId
     ? statements.filter(s => s.accountId === viewingAccountId)
     : statements;
