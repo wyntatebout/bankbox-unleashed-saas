@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,7 +36,8 @@ const Accounts = () => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterAmount, setFilterAmount] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
-
+  const [viewingAccountId, setViewingAccountId] = useState<string | null>(null);
+  
   // Templates for the bank statements
   const templates = [
     { id: "modern", name: "Modern (White)" },
@@ -117,10 +119,37 @@ const Accounts = () => {
   };
 
   const handleViewDetails = (accountId: string) => {
-    toast({
-      title: "Account Details",
-      description: `Viewing details for account ${accountId}`,
-    });
+    setViewingAccountId(accountId);
+    
+    // Set active tab to statements
+    setActiveTab("statements");
+    
+    // Generate a sample statement for this account if one doesn't exist
+    const hasExistingStatement = statements.some(s => s.accountId === accountId);
+    
+    if (!hasExistingStatement) {
+      const account = Object.values(accounts)
+        .flat()
+        .find(account => account.id === accountId);
+        
+      if (account) {
+        const newStatement = {
+          id: `stmt-auto-${Date.now()}`,
+          accountId: accountId,
+          period: "March 2025",
+          generatedDate: new Date().toLocaleDateString(),
+          downloadUrl: "#",
+          type: "modern"
+        };
+        
+        setStatements(prev => [...prev, newStatement]);
+        
+        toast({
+          title: "Statement Generated",
+          description: `A sample statement for ${account.name} has been generated.`,
+        });
+      }
+    }
   };
   
   const handleGenerateStatement = () => {
@@ -173,6 +202,9 @@ const Accounts = () => {
       // Reset some form fields
       setPasswordProtect(false);
       setStatementPassword("");
+      
+      // Auto-switch to statements tab
+      setActiveTab("statements");
     }, 1500);
   };
   
@@ -243,6 +275,11 @@ const Accounts = () => {
   const togglePreviewMode = () => {
     setPreviewMode(!previewMode);
   };
+
+  // Filter statements based on viewing account
+  const filteredStatements = viewingAccountId
+    ? statements.filter(s => s.accountId === viewingAccountId)
+    : statements;
 
   return (
     <div className="container p-6 max-w-6xl mx-auto">
@@ -337,8 +374,27 @@ const Accounts = () => {
         <TabsContent value="statements">
           <Card>
             <CardHeader>
-              <CardTitle>Account Statements</CardTitle>
-              <CardDescription>View and download your account statements</CardDescription>
+              <CardTitle>
+                {viewingAccountId ? 
+                  `Statements for ${Object.values(accounts).flat().find(a => a.id === viewingAccountId)?.name || 'Account'}` : 
+                  'Account Statements'
+                }
+              </CardTitle>
+              <CardDescription>
+                {viewingAccountId ? 
+                  `View and download statements for this account` : 
+                  'View and download your account statements'
+                }
+              </CardDescription>
+              {viewingAccountId && (
+                <Button 
+                  variant="outline" 
+                  className="mt-2" 
+                  onClick={() => setViewingAccountId(null)}
+                >
+                  Show All Accounts
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -396,34 +452,39 @@ const Accounts = () => {
                   </div>
                 )}
                 
-                {statements.length > 0 ? (
+                {filteredStatements.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Period</TableHead>
+                        <TableHead>Account</TableHead>
                         <TableHead>Generated On</TableHead>
                         <TableHead>Template</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {statements.map((statement) => (
-                        <TableRow key={statement.id}>
-                          <TableCell className="font-medium">{statement.period}</TableCell>
-                          <TableCell>{statement.generatedDate}</TableCell>
-                          <TableCell className="capitalize">{statement.type}</TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleDownloadStatement(statement.id)}
-                            >
-                              <ArrowDownToLine className="h-4 w-4 mr-2" />
-                              Download
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {filteredStatements.map((statement) => {
+                        const account = Object.values(accounts).flat().find(a => a.id === statement.accountId);
+                        return (
+                          <TableRow key={statement.id}>
+                            <TableCell className="font-medium">{statement.period}</TableCell>
+                            <TableCell>{account?.name || 'Unknown Account'}</TableCell>
+                            <TableCell>{statement.generatedDate}</TableCell>
+                            <TableCell className="capitalize">{statement.type}</TableCell>
+                            <TableCell className="text-right">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleDownloadStatement(statement.id)}
+                              >
+                                <ArrowDownToLine className="h-4 w-4 mr-2" />
+                                Download
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 ) : (
