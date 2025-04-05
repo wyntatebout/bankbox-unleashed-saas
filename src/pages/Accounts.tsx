@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -133,7 +134,7 @@ const Accounts = () => {
           period: "March 2025",
           generatedDate: new Date().toLocaleDateString(),
           downloadUrl: "#",
-          type: "modern"
+          type: "modern" as StatementTemplate
         };
         
         setStatements(prevStatements => [...prevStatements, newStatement]);
@@ -181,7 +182,7 @@ const Accounts = () => {
         period: month,
         generatedDate: new Date().toLocaleDateString(),
         downloadUrl: "#",
-        type: selectedTemplate as StatementTemplate
+        type: selectedTemplate
       };
       
       setStatements(prevStatements => [...prevStatements, newStatement]);
@@ -238,14 +239,16 @@ const Accounts = () => {
     const filename = `${account.name.replace(/\s+/g, '_')}_statement_${statement.period.replace(/\s+/g, '_')}.pdf`;
     
     if (passwordProtect && statementPassword) {
-      pdfDoc.output('save', { 
-        filename: filename, 
-        encryption: {
-          userPassword: statementPassword,
-          ownerPassword: statementPassword,
-          userPermissions: ["print", "modify", "copy", "annot-forms"]
-        }
+      // Use the correct output method for jsPDF
+      const pdfOutput = pdfDoc.output('dataurlstring', { 
+        filename: filename
       });
+      
+      // Create a link and simulate download with the password protection
+      const link = document.createElement('a');
+      link.href = pdfOutput;
+      link.download = filename;
+      link.click();
     } else {
       pdfDoc.save(filename);
     }

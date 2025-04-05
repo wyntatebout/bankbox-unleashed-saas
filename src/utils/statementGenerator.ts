@@ -159,9 +159,11 @@ export const generateBankStatement = (options: StatementOptions): jsPDF => {
       hexToRgb(templateConfig.securityFeatures.watermarkColor).b
     );
     doc.setFontSize(60);
-    doc.setGState(new doc.GState({ opacity: templateConfig.securityFeatures.watermarkOpacity }));
+    const gState = new doc.GState({opacity: templateConfig.securityFeatures.watermarkOpacity});
+    doc.setGState(gState);
     doc.text(watermark, pageWidth/2, pageHeight/2, { align: 'center', angle: 45 });
-    doc.setGState(new doc.GState({ opacity: 1.0 }));
+    const resetGState = new doc.GState({opacity: 1.0});
+    doc.setGState(resetGState);
   }
   
   // Add account summary section
@@ -180,9 +182,9 @@ export const generateBankStatement = (options: StatementOptions): jsPDF => {
     doc.setDocumentProperties({
       title: `Statement - ${account.name} - ${period}`,
       subject: `Account Statement for ${account.name}`,
-      author: 'lovable.dev Banking Services',
+      author: 'Banking Services',
       keywords: 'statement, account, banking',
-      creator: 'lovable.dev Statement Generator'
+      creator: 'Statement Generator'
     });
     
     // Note that we need to finalize the document before applying encryption
@@ -215,9 +217,10 @@ const addSecurityBackground = (doc: jsPDF, templateConfig: TemplateConfig) => {
                   hexToRgb(templateConfig.primaryColor).g, 
                   hexToRgb(templateConfig.primaryColor).b);
   doc.setLineWidth(0.1);
-  doc.setGState(new doc.GState({ opacity: 0.03 }));
+  const gState = new doc.GState({ opacity: 0.03 });
+  doc.setGState(gState);
   
-  // Create a pattern of tiny "LOVABLE.DEV" text as microprinting
+  // Create a pattern of dots instead of LOVABLE.DEV text as microprinting
   doc.setFontSize(3);
   doc.setTextColor(
     hexToRgb(templateConfig.primaryColor).r,
@@ -225,14 +228,16 @@ const addSecurityBackground = (doc: jsPDF, templateConfig: TemplateConfig) => {
     hexToRgb(templateConfig.primaryColor).b
   );
   
+  // Use dot patterns instead of text
   for (let y = 10; y < pageHeight; y += 15) {
-    for (let x = 5; x < pageWidth; x += 30) {
-      doc.text("LOVABLE.DEV", x, y);
+    for (let x = 5; x < pageWidth; x += 10) {
+      doc.circle(x, y, 0.2, 'F');
     }
   }
   
   // Reset graphics state
-  doc.setGState(new doc.GState({ opacity: 1.0 }));
+  const resetGState = new doc.GState({ opacity: 1.0 });
+  doc.setGState(resetGState);
   doc.setLineWidth(0.5);
 };
 
@@ -254,14 +259,14 @@ const addLetterhead = (
     doc.rect(0, 0, pageWidth, 40, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
-    doc.text('LOVABLE.DEV BANK', 70, 25);
+    doc.text('BANK', 70, 25);
     doc.setFontSize(12);
     doc.text('ACCOUNT STATEMENT', 70, 35);
   } else if (template === 'classic') {
     doc.rect(0, 0, pageWidth, 35, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
-    doc.text('LOVABLE.DEV FINANCIAL STATEMENT', 70, 20);
+    doc.text('FINANCIAL STATEMENT', 70, 20);
     doc.setFontSize(10);
     doc.text('SECURE DOCUMENT', 70, 30);
   } else if (template === 'minimal') {
@@ -270,7 +275,7 @@ const addLetterhead = (
     doc.line(20, 20, pageWidth - 20, 20);
     doc.setTextColor(config.fontColor);
     doc.setFontSize(16);
-    doc.text('LOVABLE.DEV BANK STATEMENT', 20, 15);
+    doc.text('BANK STATEMENT', 20, 15);
   }
   
   // Add statement date in the top right
@@ -454,7 +459,7 @@ const addTransactionTable = (
           doc.rect(0, 0, doc.internal.pageSize.width, 20, 'F');
           doc.setTextColor(255, 255, 255);
           doc.setFontSize(12);
-          doc.text('LOVABLE.DEV BANK', 20, 14);
+          doc.text('BANK', 20, 14);
         }
       }
     }
@@ -484,14 +489,14 @@ const addVerificationSection = (doc: jsPDF, documentId: string, templateConfig: 
   
   doc.setTextColor(templateConfig.fontColor);
   doc.setFontSize(8);
-  doc.text('This document is an official bank statement from lovable.dev Banking Services.', 30, footerY + 20);
+  doc.text('This document is an official bank statement.', 30, footerY + 20);
   doc.text(`Document ID: ${documentId}`, 30, footerY + 27);
-  doc.text('To verify the authenticity of this document, please visit lovable.dev/verify', 30, footerY + 34);
+  doc.text('To verify the authenticity of this document, please visit /verify', 30, footerY + 34);
   
   // Contact information
   doc.text('CONTACT US', pageWidth - 100, footerY + 10);
-  doc.text('Customer Service: 1-800-LOVABLE', pageWidth - 100, footerY + 20);
-  doc.text('Secure Message: online.lovable.dev', pageWidth - 100, footerY + 27);
+  doc.text('Customer Service: 1-800-SERVICE', pageWidth - 100, footerY + 20);
+  doc.text('Secure Message: online.banking.site', pageWidth - 100, footerY + 27);
   doc.text('Mail: P.O. Box 12345, San Francisco, CA 94107', pageWidth - 100, footerY + 34);
   
   return doc;
