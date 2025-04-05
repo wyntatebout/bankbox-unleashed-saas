@@ -1,11 +1,17 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, CreditCard, Wallet, PiggyBank, FileText, ArrowDownToLine } from "lucide-react";
+import { PlusCircle, CreditCard, Wallet, PiggyBank, FileText, ArrowDownToLine, Calendar, Filter, Settings, Eye, EyeOff, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { format } from "date-fns";
 
 const Accounts = () => {
   const { toast } = useToast();
@@ -17,7 +23,27 @@ const Accounts = () => {
     period: string;
     generatedDate: string;
     downloadUrl: string;
+    type: string;
   }[]>([]);
+  
+  // State for statement generator
+  const [statementDate, setStatementDate] = useState<Date | undefined>(new Date());
+  const [selectedAccount, setSelectedAccount] = useState("ch1");
+  const [selectedTemplate, setSelectedTemplate] = useState("modern");
+  const [includeAccountNumbers, setIncludeAccountNumbers] = useState(true);
+  const [passwordProtect, setPasswordProtect] = useState(false);
+  const [statementPassword, setStatementPassword] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterAmount, setFilterAmount] = useState("");
+  const [previewMode, setPreviewMode] = useState(false);
+
+  // Templates for the bank statements
+  const templates = [
+    { id: "modern", name: "Modern (White)" },
+    { id: "classic", name: "Classic (Formal)" },
+    { id: "minimal", name: "Minimal (Clean)" },
+    { id: "branded", name: "Branded (Full Color)" }
+  ];
 
   // Mock account data
   const accounts = {
@@ -43,19 +69,25 @@ const Accounts = () => {
     
     const dateRange = endDate.getTime() - startDate.getTime();
     
+    const categories = ["Shopping", "Dining", "Transportation", "Utilities", "Entertainment", "Healthcare", "Income", "Transfer"];
+    
     for (let i = 0; i < count; i++) {
       const isDeposit = Math.random() > 0.5;
       const randomDate = new Date(startDate.getTime() + Math.random() * dateRange);
+      const category = categories[Math.floor(Math.random() * categories.length)];
+      const description = isDeposit 
+        ? ["Deposit", "Transfer", "Direct Deposit", "Refund", "Interest Payment"][Math.floor(Math.random() * 5)] 
+        : ["Grocery Store", "Gas Station", "Online Purchase", "Restaurant", "Utility Bill"][Math.floor(Math.random() * 5)];
+      const amount = isDeposit 
+        ? +(Math.random() * 1000 + 50).toFixed(2) 
+        : -(Math.random() * 500 + 10).toFixed(2);
       
       transactions.push({
         id: `tx-${i}`,
         date: randomDate.toISOString().split('T')[0],
-        description: isDeposit 
-          ? ["Deposit", "Transfer", "Direct Deposit", "Refund", "Interest Payment"][Math.floor(Math.random() * 5)] 
-          : ["Grocery Store", "Gas Station", "Online Purchase", "Restaurant", "Utility Bill"][Math.floor(Math.random() * 5)],
-        amount: isDeposit 
-          ? +(Math.random() * 1000 + 50).toFixed(2) 
-          : -(Math.random() * 500 + 10).toFixed(2),
+        description,
+        category,
+        amount,
         balance: 0, // Will be calculated later
       });
     }
@@ -93,16 +125,42 @@ const Accounts = () => {
   };
   
   const handleGenerateStatement = () => {
+    if (!statementDate) {
+      toast({
+        title: "Date Required",
+        description: "Please select a statement date.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsGeneratingStatement(true);
     
     // Simulate generating a statement
     setTimeout(() => {
+      const selectedAccountObj = Object.values(accounts)
+        .flat()
+        .find(account => account.id === selectedAccount);
+        
+      if (!selectedAccountObj) {
+        toast({
+          title: "Error",
+          description: "Account not found.",
+          variant: "destructive"
+        });
+        setIsGeneratingStatement(false);
+        return;
+      }
+      
+      const month = format(statementDate, 'MMMM yyyy');
+      
       const newStatement = {
         id: `stmt-${Date.now()}`,
-        accountId: "ch1",
-        period: "March 2025",
+        accountId: selectedAccount,
+        period: month,
         generatedDate: new Date().toLocaleDateString(),
-        downloadUrl: "#" // In a real app, this would be a URL to download the statement
+        downloadUrl: "#",
+        type: selectedTemplate
       };
       
       setStatements([...statements, newStatement]);
@@ -110,8 +168,12 @@ const Accounts = () => {
       
       toast({
         title: "Statement Generated",
-        description: "Your March 2025 statement is ready for download.",
+        description: `Your ${month} statement is ready for download.`,
       });
+      
+      // Reset some form fields
+      setPasswordProtect(false);
+      setStatementPassword("");
     }, 1500);
   };
   
@@ -121,21 +183,53 @@ const Accounts = () => {
     if (!statement) return;
     
     // Generate the statement content
-    const transactions = generateTransactions(statement.accountId, 100);
+    let transactions = generateTransactions(statement.accountId, 100);
     const account = Object.values(accounts).flat().find(a => a.id === statement.accountId);
     
-    // Create CSV content
-    let csvContent = "Date,Description,Amount,Balance\n";
+    // Apply filters if we're in the preview mode
+    if (filterCategory !== "all") {
+      transactions = transactions.filter(tx => tx.category === filterCategory);
+    }
+    
+    if (filterAmount && !isNaN(parseFloat(filterAmount))) {
+      const amount = parseFloat(filterAmount);
+      transactions = transactions.filter(tx => Math.abs(tx.amount) >= amount);
+    }
+    
+    // Create CSV content with the template information
+    let csvContent = "BANK STATEMENT\n";
+    csvContent += `Template: ${statement.type}\n`;
+    csvContent += `Account: ${account?.name}\n`;
+    csvContent += `Period: ${statement.period}\n`;
+    csvContent += `Generated: ${statement.generatedDate}\n\n`;
+    
+    if (includeAccountNumbers && account) {
+      csvContent += `Account Number: ${account.accountNumber}\n\n`;
+    }
+    
+    csvContent += "Date,Description,Category,Amount,Balance\n";
     transactions.forEach(tx => {
-      csvContent += `${tx.date},"${tx.description}",${tx.amount.toFixed(2)},${tx.balance.toFixed(2)}\n`;
+      csvContent += `${tx.date},"${tx.description}","${tx.category}",${tx.amount.toFixed(2)},${tx.balance.toFixed(2)}\n`;
     });
+    
+    // Add summary section
+    const deposits = transactions.filter(tx => tx.amount > 0);
+    const withdrawals = transactions.filter(tx => tx.amount < 0);
+    const totalDeposits = deposits.reduce((sum, tx) => sum + tx.amount, 0);
+    const totalWithdrawals = withdrawals.reduce((sum, tx) => sum + tx.amount, 0);
+    
+    csvContent += "\nSUMMARY\n";
+    csvContent += `Opening Balance,${transactions[0].balance - transactions[0].amount}\n`;
+    csvContent += `Total Deposits,${totalDeposits.toFixed(2)}\n`;
+    csvContent += `Total Withdrawals,${totalWithdrawals.toFixed(2)}\n`;
+    csvContent += `Closing Balance,${transactions[transactions.length - 1].balance}\n`;
     
     // Create a blob and download it
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${account?.name.replace(/\s+/g, '_')}_statement_March_2025.csv`;
+    a.download = `${account?.name.replace(/\s+/g, '_')}_statement_${statement.period.replace(/\s+/g, '_')}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -145,6 +239,10 @@ const Accounts = () => {
       title: "Statement Downloaded",
       description: `Your ${statement.period} statement has been downloaded.`,
     });
+  };
+  
+  const togglePreviewMode = () => {
+    setPreviewMode(!previewMode);
   };
 
   return (
@@ -158,11 +256,12 @@ const Accounts = () => {
       </div>
 
       <Tabs defaultValue="checking" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="checking">Checking</TabsTrigger>
           <TabsTrigger value="savings">Savings</TabsTrigger>
           <TabsTrigger value="credit">Credit Cards</TabsTrigger>
           <TabsTrigger value="statements">Statements</TabsTrigger>
+          <TabsTrigger value="generator">Statement Generator</TabsTrigger>
         </TabsList>
         <TabsContent value="checking">
           <div className="grid gap-4 md:grid-cols-2">
@@ -244,19 +343,59 @@ const Accounts = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1">
-                    <Button 
-                      onClick={handleGenerateStatement} 
-                      disabled={isGeneratingStatement}
-                      className="w-full"
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      Generate March 2025 Statement
-                      {isGeneratingStatement && <span className="ml-2">...</span>}
-                    </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={togglePreviewMode}
+                  className="mb-4"
+                >
+                  {previewMode ? (
+                    <>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Hide Preview Options
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="mr-2 h-4 w-4" />
+                      Show Preview Options
+                    </>
+                  )}
+                </Button>
+                
+                {previewMode && (
+                  <div className="grid gap-4 mb-6 p-4 border rounded-md">
+                    <h3 className="font-medium">Statement Preview Options</h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="text-sm font-medium">Filter by Category</label>
+                        <Select value={filterCategory} onValueChange={setFilterCategory}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            <SelectItem value="Shopping">Shopping</SelectItem>
+                            <SelectItem value="Dining">Dining</SelectItem>
+                            <SelectItem value="Transportation">Transportation</SelectItem>
+                            <SelectItem value="Utilities">Utilities</SelectItem>
+                            <SelectItem value="Entertainment">Entertainment</SelectItem>
+                            <SelectItem value="Healthcare">Healthcare</SelectItem>
+                            <SelectItem value="Income">Income</SelectItem>
+                            <SelectItem value="Transfer">Transfer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Minimum Amount</label>
+                        <Input 
+                          type="number" 
+                          placeholder="Minimum amount"
+                          value={filterAmount}
+                          onChange={(e) => setFilterAmount(e.target.value)}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 {statements.length > 0 ? (
                   <Table>
@@ -264,6 +403,7 @@ const Accounts = () => {
                       <TableRow>
                         <TableHead>Period</TableHead>
                         <TableHead>Generated On</TableHead>
+                        <TableHead>Template</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -272,6 +412,7 @@ const Accounts = () => {
                         <TableRow key={statement.id}>
                           <TableCell className="font-medium">{statement.period}</TableCell>
                           <TableCell>{statement.generatedDate}</TableCell>
+                          <TableCell className="capitalize">{statement.type}</TableCell>
                           <TableCell className="text-right">
                             <Button 
                               variant="outline" 
@@ -291,12 +432,159 @@ const Accounts = () => {
                     <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
                     <p className="text-muted-foreground">No statements generated yet</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Generate a statement to see it here
+                      Use the Statement Generator to create a statement
                     </p>
                   </div>
                 )}
               </div>
             </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="generator">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bank Statement Generator</CardTitle>
+              <CardDescription>
+                Generate custom-branded bank statements with your preferred layout and content
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Statement Period</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {statementDate ? (
+                            format(statementDate, "MMMM yyyy")
+                          ) : (
+                            <span>Select period</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="default"
+                          selected={statementDate}
+                          onSelect={setStatementDate}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                          showOutsideDays={false}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Account</label>
+                    <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ch1">Primary Checking</SelectItem>
+                        <SelectItem value="ch2">Joint Checking</SelectItem>
+                        <SelectItem value="sv1">Emergency Fund</SelectItem>
+                        <SelectItem value="sv2">Vacation Savings</SelectItem>
+                        <SelectItem value="cc1">Platinum Card</SelectItem>
+                        <SelectItem value="cc2">Travel Rewards</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Statement Template</label>
+                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                    {templates.map(template => (
+                      <Card 
+                        key={template.id}
+                        className={`cursor-pointer border-2 transition-all ${selectedTemplate === template.id ? 'border-primary' : 'border-muted hover:border-muted-foreground/50'}`}
+                        onClick={() => setSelectedTemplate(template.id)}
+                      >
+                        <CardContent className="p-4 text-center">
+                          <div className={`mb-2 mx-auto rounded-md h-20 w-full flex items-center justify-center ${
+                            template.id === 'modern' ? 'bg-white border' : 
+                            template.id === 'classic' ? 'bg-muted' : 
+                            template.id === 'minimal' ? 'bg-background' : 
+                            'bg-gradient-to-br from-primary to-primary/60 text-white'
+                          }`}>
+                            <FileText className="h-8 w-8" />
+                          </div>
+                          <p className="text-sm font-medium">{template.name}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="include-account-numbers" 
+                        checked={includeAccountNumbers}
+                        onCheckedChange={(checked) => setIncludeAccountNumbers(checked === true)} 
+                      />
+                      <label
+                        htmlFor="include-account-numbers"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Include account numbers
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="password-protect" 
+                        checked={passwordProtect}
+                        onCheckedChange={(checked) => setPasswordProtect(checked === true)} 
+                      />
+                      <label
+                        htmlFor="password-protect"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Password protect PDF
+                      </label>
+                    </div>
+                    
+                    {passwordProtect && (
+                      <div>
+                        <Input
+                          type="password"
+                          placeholder="Enter password for PDF"
+                          value={statementPassword}
+                          onChange={(e) => setStatementPassword(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Password will be required to open the PDF
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline">
+                <Eye className="mr-2 h-4 w-4" />
+                Preview Statement
+              </Button>
+              <Button 
+                onClick={handleGenerateStatement} 
+                disabled={isGeneratingStatement}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Generate Statement
+                {isGeneratingStatement && <span className="ml-2">...</span>}
+              </Button>
+            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
