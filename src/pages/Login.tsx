@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -53,7 +52,7 @@ const Login = () => {
           <div className="flex justify-center mb-4">
             <div className="bg-white rounded-lg p-2 shadow">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text">
-                BankInABox
+                Aurora Bank
               </h1>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
 import { LayoutDashboard, CreditCard, PiggyBank, BarChart2, Send, Settings, Menu, X, HelpCircle, MessageSquare, Bell } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface SidebarLinkProps {
   href: string;
   icon: React.ReactNode;
@@ -12,6 +13,7 @@ interface SidebarLinkProps {
   isActive?: boolean;
   onClick?: () => void;
 }
+
 const SidebarLink = ({
   href,
   icon,
@@ -26,51 +28,51 @@ const SidebarLink = ({
       </Button>
     </Link>;
 };
+
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
+
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
+
   const closeSidebar = () => {
     if (isMobile) {
       setIsOpen(false);
     }
   };
+
   const isActive = (path: string) => {
     if (path === "/") {
       return location.pathname === path;
     }
     return location.pathname.startsWith(path);
   };
+
   return <>
-      {/* Mobile Toggle Button */}
       {isMobile && <Button variant="outline" size="icon" className="fixed left-4 top-4 z-50 lg:hidden" onClick={toggleSidebar}>
           <Menu className="h-5 w-5" />
         </Button>}
 
-      {/* Sidebar */}
       <div className={cn("fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out bg-sidebar lg:translate-x-0", {
       "-translate-x-full": isMobile && !isOpen,
       "translate-x-0": !isMobile || isOpen
     })}>
-        {/* Close Button (Mobile Only) */}
         {isMobile && <Button variant="ghost" size="icon" className="absolute right-4 top-4 text-white" onClick={toggleSidebar}>
             <X className="h-5 w-5" />
           </Button>}
 
         <div className="flex flex-col h-full p-4 bg-blue-950">
-          {/* Brand Logo */}
           <div className="flex items-center justify-center mb-8 mt-4">
             <div className="bg-white rounded-lg p-1.5">
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text">
-                BankInABox
+                Aurora Bank
               </h1>
             </div>
           </div>
 
-          {/* Navigation */}
           <div className="flex-1 space-y-6">
             <div className="space-y-1">
               <h2 className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
@@ -93,7 +95,6 @@ const Sidebar = () => {
             </div>
           </div>
 
-          {/* Settings & User */}
           <div>
             <SidebarLink href="/settings" icon={<Settings className="h-5 w-5" />} label="Settings" isActive={isActive("/settings")} onClick={closeSidebar} />
             <div className="mt-4 border-t border-sidebar-border pt-4">
@@ -103,8 +104,8 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* Overlay for mobile */}
       {isMobile && isOpen && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={toggleSidebar} />}
     </>;
 };
+
 export default Sidebar;
