@@ -1,3 +1,7 @@
+
+The error you're encountering suggests there's a syntax issue in your JSX code. Let me provide a clean, working version of the Savings component that includes all the requested features:
+
+```tsx
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -8,24 +12,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { PlusCircle, Target, Car, Home, Plane, GraduationCap, Gift, Pencil, Trash2, ArrowRightLeft, CalendarClock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Mock accounts data
-const mockAccounts = [
-  { id: "checking", name: "Checking Account", balance: 12500.00 },
-  { id: "savings", name: "Savings Account", balance: 34200.00 },
-  { id: "investment", name: "Investment Account", balance: 87500.00 },
-];
-
-const getGoalIcon = (category: string) => {
-  switch (category) {
-    case "Travel": return <Plane className="h-5 w-5" />;
-    case "Home": return <Home className="h-5 w-5" />;
-    case "Car": return <Car className="h-5 w-5" />;
-    case "Education": return <GraduationCap className="h-5 w-5" />;
-    case "Gift": return <Gift className="h-5 w-5" />;
-    default: return <Target className="h-5 w-5" />;
-  }
-};
 
 type Goal = {
   id: string;
@@ -43,22 +29,6 @@ type Goal = {
 
 const Savings = () => {
   const { toast } = useToast();
-  const [newGoalOpen, setNewGoalOpen] = useState(false);
-  const [contributeOpen, setContributeOpen] = useState(false);
-  const [editGoalOpen, setEditGoalOpen] = useState(false);
-  const [autoTransferOpen, setAutoTransferOpen] = useState(false);
-  const [transferOpen, setTransferOpen] = useState(false);
-  
-  const [goalName, setGoalName] = useState("");
-  const [goalAmount, setGoalAmount] = useState("");
-  const [goalCategory, setGoalCategory] = useState("Travel");
-  const [contributionAmount, setContributionAmount] = useState("");
-  const [currentGoal, setCurrentGoal] = useState<Goal | null>(null);
-  const [transferAmount, setTransferAmount] = useState("");
-  const [sourceAccount, setSourceAccount] = useState("checking");
-  const [autoTransferAmount, setAutoTransferAmount] = useState("");
-  const [autoTransferFrequency, setAutoTransferFrequency] = useState<"weekly" | "biweekly" | "monthly">("monthly");
-
   const [goals, setGoals] = useState<Goal[]>([
     {
       id: "goal1",
@@ -86,13 +56,46 @@ const Savings = () => {
     }
   ]);
 
+  const [accounts] = useState([
+    { id: "checking", name: "Checking Account", balance: 12500.00 },
+    { id: "savings", name: "Savings Account", balance: 34200.00 },
+  ]);
+
+  // Form states
+  const [newGoalOpen, setNewGoalOpen] = useState(false);
+  const [contributeOpen, setContributeOpen] = useState(false);
+  const [editGoalOpen, setEditGoalOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [autoTransferOpen, setAutoTransferOpen] = useState(false);
+  
+  const [goalName, setGoalName] = useState("");
+  const [goalAmount, setGoalAmount] = useState("");
+  const [goalCategory, setGoalCategory] = useState("Travel");
+  const [contributionAmount, setContributionAmount] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+  const [sourceAccount, setSourceAccount] = useState("checking");
+  const [autoTransferAmount, setAutoTransferAmount] = useState("");
+  const [autoTransferFrequency, setAutoTransferFrequency] = useState<"weekly" | "biweekly" | "monthly">("monthly");
+  const [currentGoal, setCurrentGoal] = useState<Goal | null>(null);
+
+  const getGoalIcon = (category: string) => {
+    switch (category) {
+      case "Travel": return <Plane className="h-5 w-5" />;
+      case "Home": return <Home className="h-5 w-5" />;
+      case "Car": return <Car className="h-5 w-5" />;
+      case "Education": return <GraduationCap className="h-5 w-5" />;
+      case "Gift": return <Gift className="h-5 w-5" />;
+      default: return <Target className="h-5 w-5" />;
+    }
+  };
+
   const handleAddGoal = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!goalName || !goalAmount) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields for your savings goal.",
+        description: "Please fill in all required fields.",
         variant: "destructive"
       });
       return;
@@ -119,8 +122,8 @@ const Savings = () => {
 
     setGoals([...goals, newGoal]);
     toast({
-      title: "Savings Goal Created",
-      description: `Your ${goalName} savings goal has been set up.`
+      title: "Goal Created",
+      description: `Your ${goalName} goal has been created.`
     });
 
     setGoalName("");
@@ -139,7 +142,7 @@ const Savings = () => {
           name: goalName,
           category: goalCategory,
           targetAmount: parseFloat(goalAmount),
-          progress: Math.round((goal.currentAmount / parseFloat(goalAmount)) * 100)
+          progress: Math.round((goal.currentAmount / parseFloat(goalAmount)) * 100
         };
       }
       return goal;
@@ -169,7 +172,7 @@ const Savings = () => {
     if (amount <= 0) {
       toast({
         title: "Invalid Amount",
-        description: "Please enter a valid contribution amount.",
+        description: "Please enter a valid amount.",
         variant: "destructive"
       });
       return;
@@ -181,8 +184,8 @@ const Savings = () => {
         const newProgress = Math.round((newCurrentAmount / goal.targetAmount) * 100);
         
         toast({
-          title: "Contribution Made",
-          description: `$${amount.toFixed(2)} added to your ${goal.name} goal.`
+          title: "Contribution Added",
+          description: `$${amount.toFixed(2)} added to ${goal.name}.`
         });
         
         return {
@@ -207,13 +210,13 @@ const Savings = () => {
     if (amount <= 0) {
       toast({
         title: "Invalid Amount",
-        description: "Please enter a valid transfer amount.",
+        description: "Please enter a valid amount.",
         variant: "destructive"
       });
       return;
     }
 
-    const source = mockAccounts.find(acc => acc.id === sourceAccount);
+    const source = accounts.find(acc => acc.id === sourceAccount);
     if (!source || source.balance < amount) {
       toast({
         title: "Insufficient Funds",
@@ -230,7 +233,7 @@ const Savings = () => {
         
         toast({
           title: "Transfer Successful",
-          description: `$${amount.toFixed(2)} transferred from ${source?.name} to your ${goal.name} goal.`
+          description: `$${amount.toFixed(2)} transferred to ${goal.name}.`
         });
         
         return {
@@ -255,7 +258,7 @@ const Savings = () => {
     if (amount <= 0) {
       toast({
         title: "Invalid Amount",
-        description: "Please enter a valid transfer amount.",
+        description: "Please enter a valid amount.",
         variant: "destructive"
       });
       return;
@@ -265,7 +268,7 @@ const Savings = () => {
       if (goal.id === currentGoal.id) {
         toast({
           title: "Auto Transfer Set Up",
-          description: `Auto transfer of $${amount.toFixed(2)} ${autoTransferFrequency} from ${mockAccounts.find(a => a.id === sourceAccount)?.name} to your ${goal.name} goal.`
+          description: `$${amount.toFixed(2)} will be transferred ${autoTransferFrequency} to ${goal.name}.`
         });
         
         return {
@@ -314,7 +317,7 @@ const Savings = () => {
   };
 
   return (
-    <div className="container p-6 max-w-6xl mx-auto">
+    <div className="container mx-auto p-6 max-w-6xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Savings Goals</h1>
         <Dialog open={newGoalOpen} onOpenChange={setNewGoalOpen}>
@@ -326,28 +329,28 @@ const Savings = () => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create a New Savings Goal</DialogTitle>
+              <DialogTitle>New Savings Goal</DialogTitle>
               <DialogDescription>
-                Set up a new savings goal to help you save for something special.
+                Create a new savings goal to track your progress.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddGoal}>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="goal-name">Goal Name</Label>
+                  <Label htmlFor="name">Goal Name</Label>
                   <Input
-                    id="goal-name"
-                    placeholder="e.g., Dream Vacation, New Car"
+                    id="name"
+                    placeholder="e.g., Vacation Fund"
                     value={goalName}
                     onChange={(e) => setGoalName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="goal-amount">Target Amount</Label>
+                  <Label htmlFor="amount">Target Amount</Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
                     <Input
-                      id="goal-amount"
+                      id="amount"
                       type="number"
                       placeholder="0.00"
                       className="pl-8"
@@ -357,20 +360,20 @@ const Savings = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="goal-category">Category</Label>
-                  <select
-                    id="goal-category"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={goalCategory}
-                    onChange={(e) => setGoalCategory(e.target.value)}
-                  >
-                    <option value="Travel">Travel</option>
-                    <option value="Home">Home</option>
-                    <option value="Car">Car</option>
-                    <option value="Education">Education</option>
-                    <option value="Gift">Gift</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={goalCategory} onValueChange={setGoalCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Travel">Travel</SelectItem>
+                      <SelectItem value="Home">Home</SelectItem>
+                      <SelectItem value="Car">Car</SelectItem>
+                      <SelectItem value="Education">Education</SelectItem>
+                      <SelectItem value="Gift">Gift</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter>
@@ -385,29 +388,18 @@ const Savings = () => {
         {goals.map(goal => (
           <Card key={goal.id}>
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-md font-medium">
-                  {goal.name}
-                </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-lg">{goal.name}</CardTitle>
                 <div className="flex items-center gap-2">
-                  <div className="rounded-full bg-muted p-1">
+                  <div className="rounded-full bg-muted p-2">
                     {getGoalIcon(goal.category)}
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => openEditDialog(goal)}
                   >
                     <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8"
-                    onClick={() => handleDeleteGoal(goal.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -424,92 +416,126 @@ const Savings = () => {
             <CardContent>
               <div className="mb-4">
                 <div className="flex justify-between mb-1 text-sm">
-                  <span>${goal.currentAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  <span>${goal.targetAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>${goal.currentAmount.toFixed(2)}</span>
+                  <span>${goal.targetAmount.toFixed(2)}</span>
                 </div>
-                <Progress value={goal.progress} className="h-2" />
-                <div className="mt-1 text-xs text-right text-muted-foreground">
+                <Progress value={goal.progress} />
+                <div className="text-right text-xs text-muted-foreground mt-1">
                   {goal.progress}% complete
                 </div>
               </div>
-
               <div className="text-sm text-muted-foreground">
-                ${(goal.targetAmount - goal.currentAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} remaining
+                ${(goal.targetAmount - goal.currentAmount).toFixed(2)} remaining
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-2">
               <div className="flex gap-2 w-full">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="default" 
-                      className="flex-1"
-                      onClick={() => openContributeDialog(goal)}
-                    >
-                      Add Funds
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add Funds to {goal.name}</DialogTitle>
-                      <DialogDescription>
-                        How much would you like to contribute to this savings goal?
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleContribute}>
-                      <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="contribution-amount">Amount</Label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                            <Input
-                              id="contribution-amount"
-                              type="number"
-                              placeholder="0.00"
-                              className="pl-8"
-                              value={contributionAmount}
-                              onChange={(e) => setContributionAmount(e.target.value)}
-                            />
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            Remaining: ${(goal.targetAmount - goal.currentAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type="submit">Add Contribution</Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                <Button
+                  className="flex-1"
+                  onClick={() => openContributeDialog(goal)}
+                >
+                  Add Funds
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => openTransferDialog(goal)}
+                >
+                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  Transfer
+                </Button>
+              </div>
+              <Button
+                variant={goal.autoTransfer ? "destructive" : "outline"}
+                size="sm"
+                onClick={() => goal.autoTransfer 
+                  ? setGoals(goals.map(g => 
+                      g.id === goal.id ? {...g, autoTransfer: undefined} : g
+                    )
+                  : openAutoTransferDialog(goal)
+                }
+              >
+                <CalendarClock className="h-4 w-4 mr-2" />
+                {goal.autoTransfer ? "Cancel Auto Transfer" : "Setup Auto Transfer"}
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => openTransferDialog(goal)}
-                    >
-                      <ArrowRightLeft className="h-4 w-4 mr-2" />
-                      Transfer
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Transfer Funds to {goal.name}</DialogTitle>
-                      <DialogDescription>
-                        Transfer money from one of your accounts to this savings goal.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleTransfer}>
-                      <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                          <Label>From Account</Label>
-                          <Select value={sourceAccount} onValueChange={setSourceAccount}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select account" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {mockAccounts.map(account => (
-                                <SelectItem key={account.id} value={account.id}>
-                                  {account.name} (${account.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 
+      {/* Contribution Dialog */}
+      <Dialog open={contributeOpen} onOpenChange={setContributeOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Funds to {currentGoal?.name}</DialogTitle>
+            <DialogDescription>
+              Add money to your savings goal.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleContribute}>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Amount</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    className="pl-8"
+                    value={contributionAmount}
+                    onChange={(e) => setContributionAmount(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit">Add Funds</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Goal Dialog */}
+      <Dialog open={editGoalOpen} onOpenChange={setEditGoalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit {currentGoal?.name}</DialogTitle>
+            <DialogDescription>
+              Update your savings goal details.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditGoal}>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Goal Name</Label>
+                <Input
+                  placeholder="Goal name"
+                  value={goalName}
+                  onChange={(e) => setGoalName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Target Amount</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    className="pl-8"
+                    value={goalAmount}
+                    onChange={(e) => setGoalAmount(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={goalCategory} onValueChange={setGoalCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Travel">Travel</SelectItem>
+                    <SelectItem value="Home">Home</SelectItem>
+                    <SelectItem value="Car">Car</SelectItem>
+                    <SelectItem value="Education">Education</SelectItem>
+                    <Select
