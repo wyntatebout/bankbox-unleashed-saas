@@ -159,11 +159,11 @@ export const generateBankStatement = (options: StatementOptions): jsPDF => {
       hexToRgb(templateConfig.securityFeatures.watermarkColor).b
     );
     doc.setFontSize(60);
-    const gState = new doc.GState({opacity: templateConfig.securityFeatures.watermarkOpacity});
-    doc.setGState(gState);
+    // Fix for GState - use the proper API
+    doc.saveGraphicsState();
+    doc.setGState({ opacity: templateConfig.securityFeatures.watermarkOpacity });
     doc.text(watermark, pageWidth/2, pageHeight/2, { align: 'center', angle: 45 });
-    const resetGState = new doc.GState({opacity: 1.0});
-    doc.setGState(resetGState);
+    doc.restoreGraphicsState();
   }
   
   // Add account summary section
@@ -217,10 +217,12 @@ const addSecurityBackground = (doc: jsPDF, templateConfig: TemplateConfig) => {
                   hexToRgb(templateConfig.primaryColor).g, 
                   hexToRgb(templateConfig.primaryColor).b);
   doc.setLineWidth(0.1);
-  const gState = new doc.GState({ opacity: 0.03 });
-  doc.setGState(gState);
   
-  // Create a pattern of dots instead of LOVABLE.DEV text as microprinting
+  // Fix for GState - use the proper API
+  doc.saveGraphicsState();
+  doc.setGState({ opacity: 0.03 });
+  
+  // Create a pattern of dots instead of text as microprinting
   doc.setFontSize(3);
   doc.setTextColor(
     hexToRgb(templateConfig.primaryColor).r,
@@ -236,8 +238,7 @@ const addSecurityBackground = (doc: jsPDF, templateConfig: TemplateConfig) => {
   }
   
   // Reset graphics state
-  const resetGState = new doc.GState({ opacity: 1.0 });
-  doc.setGState(resetGState);
+  doc.restoreGraphicsState();
   doc.setLineWidth(0.5);
 };
 
@@ -509,4 +510,3 @@ const formatAmount = (amount: number): string => {
     currency: 'USD',
   }).format(amount);
 };
-
