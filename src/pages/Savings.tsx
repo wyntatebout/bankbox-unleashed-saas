@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -30,9 +29,12 @@ const getGoalIcon = (category: string) => {
 const Savings = () => {
   const { toast } = useToast();
   const [newGoalOpen, setNewGoalOpen] = useState(false);
+  const [contributeOpen, setContributeOpen] = useState(false);
   const [goalName, setGoalName] = useState("");
   const [goalAmount, setGoalAmount] = useState("");
   const [goalCategory, setGoalCategory] = useState("Travel");
+  const [currentGoalId, setCurrentGoalId] = useState("");
+  const [contributionAmount, setContributionAmount] = useState("");
 
   // Mock savings goals data
   const [goals, setGoals] = useState([
@@ -106,18 +108,34 @@ const Savings = () => {
     setNewGoalOpen(false);
   };
 
-  const handleContribute = (goalId: string) => {
+  const handleContributeClick = (goalId: string) => {
+    setCurrentGoalId(goalId);
+    setContributeOpen(true);
+  };
+
+  const handleContribute = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!contributionAmount || parseFloat(contributionAmount) <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid contribution amount.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const amount = parseFloat(contributionAmount);
+    
     // Find the goal and update it
     const updatedGoals = goals.map(goal => {
-      if (goal.id === goalId) {
-        // Add a random amount between $50 and $500
-        const contributionAmount = Math.floor(Math.random() * 450) + 50;
-        const newCurrentAmount = Math.min(goal.currentAmount + contributionAmount, goal.targetAmount);
+      if (goal.id === currentGoalId) {
+        const newCurrentAmount = Math.min(goal.currentAmount + amount, goal.targetAmount);
         const newProgress = Math.round((newCurrentAmount / goal.targetAmount) * 100);
         
         toast({
           title: "Contribution Made",
-          description: `$${contributionAmount} added to your ${goal.name} goal.`
+          description: `$${amount.toLocaleString()} added to your ${goal.name} goal.`
         });
         
         return {
@@ -130,6 +148,8 @@ const Savings = () => {
     });
     
     setGoals(updatedGoals);
+    setContributionAmount("");
+    setContributeOpen(false);
   };
 
   return (
@@ -231,14 +251,50 @@ const Savings = () => {
               </div>
             </CardContent>
             <CardFooter>
-              <Button 
-                className="w-full" 
-                variant={goal.progress === 100 ? "secondary" : "default"}
-                disabled={goal.progress === 100}
-                onClick={() => handleContribute(goal.id)}
-              >
-                {goal.progress === 100 ? "Goal Completed!" : "Add Contribution"}
-              </Button>
+              <Dialog open={contributeOpen} onOpenChange={setContributeOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="w-full" 
+                    variant={goal.progress === 100 ? "secondary" : "default"}
+                    disabled={goal.progress === 100}
+                    onClick={() => handleContributeClick(goal.id)}
+                  >
+                    {goal.progress === 100 ? "Goal Completed!" : "Add Contribution"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Contribution to {goal.name}</DialogTitle>
+                    <DialogDescription>
+                      How much would you like to contribute to this savings goal?
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleContribute}>
+                    <div className="grid gap-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="contribution-amount">Amount</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                          <Input
+                            id="contribution-amount"
+                            type="number"
+                            placeholder="0.00"
+                            className="pl-8"
+                            value={contributionAmount}
+                            onChange={(e) => setContributionAmount(e.target.value)}
+                          />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Remaining: ${(goal.targetAmount - goal.currentAmount).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Add Contribution</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </CardFooter>
           </Card>
         ))}
