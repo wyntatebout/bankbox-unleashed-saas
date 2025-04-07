@@ -5,28 +5,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Target, Car, Home, Plane, GraduationCap, Gift, Edit, Trash2, ArrowRightLeft, Clock } from "lucide-react";
+import { PlusCircle, Target, Car, Home, Plane, GraduationCap, Gift, Pencil, Trash2, ArrowRightLeft, CalendarClock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Helper function to get a goal icon
-const getGoalIcon = (category) => {
+// Mock accounts data
+const mockAccounts = [
+  { id: "checking", name: "Checking Account", balance: 12500.00 },
+  { id: "savings", name: "Savings Account", balance: 34200.00 },
+  { id: "investment", name: "Investment Account", balance: 87500.00 },
+];
+
+const getGoalIcon = (category: string) => {
   switch (category) {
-    case "Travel":
-      return <Plane className="h-5 w-5" />;
-    case "Home":
-      return <Home className="h-5 w-5" />;
-    case "Car":
-      return <Car className="h-5 w-5" />;
-    case "Education":
-      return <GraduationCap className="h-5 w-5" />;
-    case "Gift":
-      return <Gift className="h-5 w-5" />;
-    default:
-      return <Target className="h-5 w-5" />;
+    case "Travel": return <Plane className="h-5 w-5" />;
+    case "Home": return <Home className="h-5 w-5" />;
+    case "Car": return <Car className="h-5 w-5" />;
+    case "Education": return <GraduationCap className="h-5 w-5" />;
+    case "Gift": return <Gift className="h-5 w-5" />;
+    default: return <Target className="h-5 w-5" />;
   }
+};
+
+type Goal = {
+  id: string;
+  name: string;
+  category: string;
+  currentAmount: number;
+  targetAmount: number;
+  progress: number;
+  autoTransfer?: {
+    amount: number;
+    frequency: 'weekly' | 'biweekly' | 'monthly';
+    sourceAccount: string;
+  };
 };
 
 const Savings = () => {
@@ -34,39 +46,27 @@ const Savings = () => {
   const [newGoalOpen, setNewGoalOpen] = useState(false);
   const [contributeOpen, setContributeOpen] = useState(false);
   const [editGoalOpen, setEditGoalOpen] = useState(false);
-  const [transferOpen, setTransferOpen] = useState(false);
   const [autoTransferOpen, setAutoTransferOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  
   const [goalName, setGoalName] = useState("");
   const [goalAmount, setGoalAmount] = useState("");
   const [goalCategory, setGoalCategory] = useState("Travel");
   const [contributionAmount, setContributionAmount] = useState("");
-  const [currentGoalId, setCurrentGoalId] = useState(null);
-  const [transferFromGoalId, setTransferFromGoalId] = useState(null);
-  const [transferToGoalId, setTransferToGoalId] = useState(null);
+  const [currentGoal, setCurrentGoal] = useState<Goal | null>(null);
   const [transferAmount, setTransferAmount] = useState("");
-  const [autoTransferGoalId, setAutoTransferGoalId] = useState(null);
+  const [sourceAccount, setSourceAccount] = useState("checking");
   const [autoTransferAmount, setAutoTransferAmount] = useState("");
-  const [autoTransferFrequency, setAutoTransferFrequency] = useState("weekly");
+  const [autoTransferFrequency, setAutoTransferFrequency] = useState<"weekly" | "biweekly" | "monthly">("monthly");
 
-  // Mock bank accounts data
-  const [accounts, setAccounts] = useState([
-    { id: "account1", name: "Checking Account", balance: 5423.65 },
-    { id: "account2", name: "Savings Account", balance: 12750.42 },
-  ]);
-
-  // Mock auto-transfers data
-  const [autoTransfers, setAutoTransfers] = useState([]);
-
-  // Mock savings goals data
-  const [goals, setGoals] = useState([
+  const [goals, setGoals] = useState<Goal[]>([
     {
       id: "goal1",
       name: "New Car",
       category: "Car",
       currentAmount: 5000,
       targetAmount: 20000,
-      progress: 25,
-      autoTransfer: null
+      progress: 25
     },
     {
       id: "goal2",
@@ -74,8 +74,7 @@ const Savings = () => {
       category: "Travel",
       currentAmount: 2500,
       targetAmount: 5000,
-      progress: 50,
-      autoTransfer: null
+      progress: 50
     },
     {
       id: "goal3",
@@ -83,12 +82,11 @@ const Savings = () => {
       category: "Other",
       currentAmount: 8000,
       targetAmount: 10000,
-      progress: 80,
-      autoTransfer: null
+      progress: 80
     }
   ]);
 
-  const handleAddGoal = (e) => {
+  const handleAddGoal = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!goalName || !goalAmount) {
@@ -100,7 +98,8 @@ const Savings = () => {
       return;
     }
 
-    if (parseFloat(goalAmount) <= 0) {
+    const targetAmount = parseFloat(goalAmount);
+    if (targetAmount <= 0) {
       toast({
         title: "Invalid Amount",
         description: "Please enter a valid target amount.",
@@ -109,118 +108,65 @@ const Savings = () => {
       return;
     }
 
-    // Create new goal
-    const newGoal = {
+    const newGoal: Goal = {
       id: `goal${goals.length + 1}`,
       name: goalName,
       category: goalCategory,
       currentAmount: 0,
-      targetAmount: parseFloat(goalAmount),
-      progress: 0,
-      autoTransfer: null
+      targetAmount,
+      progress: 0
     };
 
     setGoals([...goals, newGoal]);
-    
     toast({
       title: "Savings Goal Created",
       description: `Your ${goalName} savings goal has been set up.`
     });
 
-    // Reset form and close dialog
     setGoalName("");
     setGoalAmount("");
     setNewGoalOpen(false);
   };
 
-  const handleEditGoal = (e) => {
+  const handleEditGoal = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!goalName || !goalAmount) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields for your savings goal.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!currentGoal) return;
 
-    if (parseFloat(goalAmount) <= 0) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid target amount.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Update the goal
     const updatedGoals = goals.map(goal => {
-      if (goal.id === currentGoalId) {
-        const newTargetAmount = parseFloat(goalAmount);
-        const newProgress = Math.round((goal.currentAmount / newTargetAmount) * 100);
-        
+      if (goal.id === currentGoal.id) {
         return {
           ...goal,
           name: goalName,
           category: goalCategory,
-          targetAmount: newTargetAmount,
-          progress: newProgress
+          targetAmount: parseFloat(goalAmount),
+          progress: Math.round((goal.currentAmount / parseFloat(goalAmount)) * 100)
         };
       }
       return goal;
     });
-    
-    setGoals(updatedGoals);
-    
-    toast({
-      title: "Savings Goal Updated",
-      description: `Your ${goalName} savings goal has been updated.`
-    });
 
-    // Reset form and close dialog
-    setGoalName("");
-    setGoalAmount("");
-    setCurrentGoalId(null);
+    setGoals(updatedGoals);
+    toast({
+      title: "Goal Updated",
+      description: `Your ${goalName} goal has been updated.`
+    });
     setEditGoalOpen(false);
   };
 
-  const handleDeleteGoal = (goalId) => {
-    // Filter out the goal to delete
-    const updatedGoals = goals.filter(goal => goal.id !== goalId);
-    setGoals(updatedGoals);
-    
-    // Also remove any auto-transfers for this goal
-    const updatedAutoTransfers = autoTransfers.filter(transfer => transfer.goalId !== goalId);
-    setAutoTransfers(updatedAutoTransfers);
-    
+  const handleDeleteGoal = (goalId: string) => {
+    setGoals(goals.filter(goal => goal.id !== goalId));
     toast({
-      title: "Savings Goal Deleted",
-      description: "Your savings goal has been deleted."
+      title: "Goal Deleted",
+      description: "Your savings goal has been removed."
     });
   };
 
-  const handleEditClick = (goalId) => {
-    const goalToEdit = goals.find(goal => goal.id === goalId);
-    if (goalToEdit) {
-      setCurrentGoalId(goalId);
-      setGoalName(goalToEdit.name);
-      setGoalAmount(goalToEdit.targetAmount.toString());
-      setGoalCategory(goalToEdit.category);
-      setEditGoalOpen(true);
-    }
-  };
-
-  const handleContributeClick = (goalId) => {
-    setCurrentGoalId(goalId);
-    setContributionAmount("");
-    setContributeOpen(true);
-  };
-
-  const handleContribute = (e) => {
+  const handleContribute = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!contributionAmount || parseFloat(contributionAmount) <= 0) {
+    if (!currentGoal || !contributionAmount) return;
+
+    const amount = parseFloat(contributionAmount);
+    if (amount <= 0) {
       toast({
         title: "Invalid Amount",
         description: "Please enter a valid contribution amount.",
@@ -229,10 +175,8 @@ const Savings = () => {
       return;
     }
 
-    // Find the goal and update it
     const updatedGoals = goals.map(goal => {
-      if (goal.id === currentGoalId) {
-        const amount = parseFloat(contributionAmount);
+      if (goal.id === currentGoal.id) {
         const newCurrentAmount = Math.min(goal.currentAmount + amount, goal.targetAmount);
         const newProgress = Math.round((newCurrentAmount / goal.targetAmount) * 100);
         
@@ -249,42 +193,18 @@ const Savings = () => {
       }
       return goal;
     });
-    
+
     setGoals(updatedGoals);
     setContributionAmount("");
-    setCurrentGoalId(null);
     setContributeOpen(false);
   };
 
-  const handleTransferClick = () => {
-    setTransferFromGoalId(null);
-    setTransferToGoalId(null);
-    setTransferAmount("");
-    setTransferOpen(true);
-  };
-
-  const handleTransfer = (e) => {
+  const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!transferFromGoalId || !transferToGoalId) {
-      toast({
-        title: "Missing Selection",
-        description: "Please select goals to transfer from and to.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!currentGoal || !transferAmount) return;
 
-    if (transferFromGoalId === transferToGoalId) {
-      toast({
-        title: "Invalid Selection",
-        description: "You cannot transfer to the same goal.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!transferAmount || parseFloat(transferAmount) <= 0) {
+    const amount = parseFloat(transferAmount);
+    if (amount <= 0) {
       toast({
         title: "Invalid Amount",
         description: "Please enter a valid transfer amount.",
@@ -293,139 +213,46 @@ const Savings = () => {
       return;
     }
 
-    const fromGoal = goals.find(goal => goal.id === transferFromGoalId);
-    const amount = parseFloat(transferAmount);
-
-    if (amount > fromGoal.currentAmount) {
+    const source = mockAccounts.find(acc => acc.id === sourceAccount);
+    if (!source || source.balance < amount) {
       toast({
         title: "Insufficient Funds",
-        description: `The maximum amount you can transfer is $${fromGoal.currentAmount.toFixed(2)}.`,
+        description: "Not enough money in the selected account.",
         variant: "destructive"
       });
       return;
     }
 
-    // Update both goals
     const updatedGoals = goals.map(goal => {
-      if (goal.id === transferFromGoalId) {
-        const newCurrentAmount = goal.currentAmount - amount;
-        const newProgress = Math.round((newCurrentAmount / goal.targetAmount) * 100);
-        
-        return {
-          ...goal,
-          currentAmount: newCurrentAmount,
-          progress: newProgress
-        };
-      }
-      
-      if (goal.id === transferToGoalId) {
+      if (goal.id === currentGoal.id) {
         const newCurrentAmount = Math.min(goal.currentAmount + amount, goal.targetAmount);
         const newProgress = Math.round((newCurrentAmount / goal.targetAmount) * 100);
         
+        toast({
+          title: "Transfer Successful",
+          description: `$${amount.toFixed(2)} transferred from ${source?.name} to your ${goal.name} goal.`
+        });
+        
         return {
           ...goal,
           currentAmount: newCurrentAmount,
           progress: newProgress
         };
       }
-      
       return goal;
     });
-    
-    setGoals(updatedGoals);
-    
-    const fromGoalName = goals.find(goal => goal.id === transferFromGoalId).name;
-    const toGoalName = goals.find(goal => goal.id === transferToGoalId).name;
-    
-    toast({
-      title: "Transfer Complete",
-      description: `$${amount.toFixed(2)} transferred from ${fromGoalName} to ${toGoalName}.`
-    });
 
-    setTransferFromGoalId(null);
-    setTransferToGoalId(null);
+    setGoals(updatedGoals);
     setTransferAmount("");
     setTransferOpen(false);
   };
 
-  const handleAccountContribute = (e, accountId, goalId) => {
+  const handleAutoTransfer = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!contributionAmount || parseFloat(contributionAmount) <= 0) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid contribution amount.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!currentGoal || !autoTransferAmount) return;
 
-    const amount = parseFloat(contributionAmount);
-    const account = accounts.find(acc => acc.id === accountId);
-    
-    if (amount > account.balance) {
-      toast({
-        title: "Insufficient Funds",
-        description: `Your ${account.name} has insufficient funds for this transfer.`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Update the account balance
-    const updatedAccounts = accounts.map(acc => {
-      if (acc.id === accountId) {
-        return {
-          ...acc,
-          balance: acc.balance - amount
-        };
-      }
-      return acc;
-    });
-    
-    setAccounts(updatedAccounts);
-
-    // Update the goal
-    const updatedGoals = goals.map(goal => {
-      if (goal.id === goalId) {
-        const newCurrentAmount = Math.min(goal.currentAmount + amount, goal.targetAmount);
-        const newProgress = Math.round((newCurrentAmount / goal.targetAmount) * 100);
-        
-        return {
-          ...goal,
-          currentAmount: newCurrentAmount,
-          progress: newProgress
-        };
-      }
-      return goal;
-    });
-    
-    setGoals(updatedGoals);
-    
-    const goalName = goals.find(goal => goal.id === goalId).name;
-    const accountName = account.name;
-    
-    toast({
-      title: "Contribution Made",
-      description: `$${amount.toFixed(2)} transferred from ${accountName} to ${goalName}.`
-    });
-
-    setContributionAmount("");
-    setCurrentGoalId(null);
-    setContributeOpen(false);
-  };
-
-  const handleAutoTransferClick = (goalId) => {
-    setAutoTransferGoalId(goalId);
-    setAutoTransferAmount("");
-    setAutoTransferFrequency("weekly");
-    setAutoTransferOpen(true);
-  };
-
-  const handleSetupAutoTransfer = (e) => {
-    e.preventDefault();
-    
-    if (!autoTransferAmount || parseFloat(autoTransferAmount) <= 0) {
+    const amount = parseFloat(autoTransferAmount);
+    if (amount <= 0) {
       toast({
         title: "Invalid Amount",
         description: "Please enter a valid transfer amount.",
@@ -434,415 +261,255 @@ const Savings = () => {
       return;
     }
 
-    const amount = parseFloat(autoTransferAmount);
-    const goal = goals.find(g => g.id === autoTransferGoalId);
-    
-    // Create new auto-transfer
-    const newAutoTransfer = {
-      id: `transfer${autoTransfers.length + 1}`,
-      goalId: autoTransferGoalId,
-      amount: amount,
-      frequency: autoTransferFrequency,
-      nextTransferDate: getNextTransferDate(autoTransferFrequency),
-      accountId: "account1" // Default to checking account
-    };
-
-    setAutoTransfers([...autoTransfers, newAutoTransfer]);
-    
-    // Update the goal with auto-transfer info
-    const updatedGoals = goals.map(g => {
-      if (g.id === autoTransferGoalId) {
+    const updatedGoals = goals.map(goal => {
+      if (goal.id === currentGoal.id) {
+        toast({
+          title: "Auto Transfer Set Up",
+          description: `Auto transfer of $${amount.toFixed(2)} ${autoTransferFrequency} from ${mockAccounts.find(a => a.id === sourceAccount)?.name} to your ${goal.name} goal.`
+        });
+        
         return {
-          ...g,
-          autoTransfer: newAutoTransfer.id
+          ...goal,
+          autoTransfer: {
+            amount,
+            frequency: autoTransferFrequency,
+            sourceAccount
+          }
         };
       }
-      return g;
-    });
-    
-    setGoals(updatedGoals);
-    
-    toast({
-      title: "Auto-Transfer Set Up",
-      description: `$${amount.toFixed(2)} will be automatically transferred ${autoTransferFrequency} to your ${goal.name} goal.`
+      return goal;
     });
 
-    setAutoTransferGoalId(null);
+    setGoals(updatedGoals);
     setAutoTransferAmount("");
     setAutoTransferOpen(false);
   };
 
-  const handleCancelAutoTransfer = (goalId) => {
-    // Find the goal and its auto-transfer
-    const goal = goals.find(g => g.id === goalId);
-    
-    if (!goal.autoTransfer) return;
-    
-    // Remove the auto-transfer
-    const updatedAutoTransfers = autoTransfers.filter(transfer => transfer.id !== goal.autoTransfer);
-    setAutoTransfers(updatedAutoTransfers);
-    
-    // Update the goal
-    const updatedGoals = goals.map(g => {
-      if (g.id === goalId) {
-        return {
-          ...g,
-          autoTransfer: null
-        };
-      }
-      return g;
-    });
-    
-    setGoals(updatedGoals);
-    
-    toast({
-      title: "Auto-Transfer Cancelled",
-      description: `Auto-transfer for ${goal.name} has been cancelled.`
-    });
+  const openEditDialog = (goal: Goal) => {
+    setCurrentGoal(goal);
+    setGoalName(goal.name);
+    setGoalAmount(goal.targetAmount.toString());
+    setGoalCategory(goal.category);
+    setEditGoalOpen(true);
   };
 
-  // Helper function to get next transfer date based on frequency
-  const getNextTransferDate = (frequency) => {
-    const date = new Date();
-    switch (frequency) {
-      case "daily":
-        date.setDate(date.getDate() + 1);
-        break;
-      case "weekly":
-        date.setDate(date.getDate() + 7);
-        break;
-      case "monthly":
-        date.setMonth(date.getMonth() + 1);
-        break;
-      default:
-        date.setDate(date.getDate() + 7);
-    }
-    return date.toISOString().split('T')[0];
+  const openContributeDialog = (goal: Goal) => {
+    setCurrentGoal(goal);
+    setContributionAmount("");
+    setContributeOpen(true);
   };
 
-  // Format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+  const openTransferDialog = (goal: Goal) => {
+    setCurrentGoal(goal);
+    setTransferAmount("");
+    setTransferOpen(true);
+  };
+
+  const openAutoTransferDialog = (goal: Goal) => {
+    setCurrentGoal(goal);
+    setAutoTransferAmount(goal.autoTransfer?.amount.toString() || "");
+    setAutoTransferFrequency(goal.autoTransfer?.frequency || "monthly");
+    setSourceAccount(goal.autoTransfer?.sourceAccount || "checking");
+    setAutoTransferOpen(true);
   };
 
   return (
     <div className="container p-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Savings Goals</h1>
-        <div className="flex space-x-2">
-          <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" onClick={handleTransferClick}>
-                <ArrowRightLeft className="mr-2 h-4 w-4" />
-                Transfer Between Goals
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Transfer Between Goals</DialogTitle>
-                <DialogDescription>
-                  Move money from one savings goal to another.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleTransfer}>
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="from-goal">From Goal</Label>
-                    <select
-                      id="from-goal"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      value={transferFromGoalId || ""}
-                      onChange={(e) => setTransferFromGoalId(e.target.value)}
-                    >
-                      <option value="">Select a goal</option>
-                      {goals.filter(goal => goal.currentAmount > 0).map(goal => (
-                        <option key={goal.id} value={goal.id}>
-                          {goal.name} ({formatCurrency(goal.currentAmount)} available)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="to-goal">To Goal</Label>
-                    <select
-                      id="to-goal"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      value={transferToGoalId || ""}
-                      onChange={(e) => setTransferToGoalId(e.target.value)}
-                    >
-                      <option value="">Select a goal</option>
-                      {goals.filter(goal => goal.progress < 100).map(goal => (
-                        <option key={goal.id} value={goal.id}>
-                          {goal.name} ({formatCurrency(goal.targetAmount - goal.currentAmount)} needed)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="transfer-amount">Amount</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                      <Input
-                        id="transfer-amount"
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        className="pl-8"
-                        value={transferAmount}
-                        onChange={(e) => setTransferAmount(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Transfer Funds</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-          
-          <Dialog open={newGoalOpen} onOpenChange={setNewGoalOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Goal
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create a New Savings Goal</DialogTitle>
-                <DialogDescription>
-                  Set up a new savings goal to help you save for something special.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleAddGoal}>
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="goal-name">Goal Name</Label>
-                    <Input
-                      id="goal-name"
-                      placeholder="e.g., Dream Vacation, New Car"
-                      value={goalName}
-                      onChange={(e) => setGoalName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="goal-amount">Target Amount</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                      <Input
-                        id="goal-amount"
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        className="pl-8"
-                        value={goalAmount}
-                        onChange={(e) => setGoalAmount(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="goal-category">Category</Label>
-                    <select
-                      id="goal-category"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      value={goalCategory}
-                      onChange={(e) => setGoalCategory(e.target.value)}
-                    >
-                      <option value="Travel">Travel</option>
-                      <option value="Home">Home</option>
-                      <option value="Car">Car</option>
-                      <option value="Education">Education</option>
-                      <option value="Gift">Gift</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Create Goal</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Edit Goal Dialog */}
-      <Dialog open={editGoalOpen} onOpenChange={setEditGoalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Savings Goal</DialogTitle>
-            <DialogDescription>
-              Update your savings goal details.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleEditGoal}>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-goal-name">Goal Name</Label>
-                <Input
-                  id="edit-goal-name"
-                  placeholder="e.g., Dream Vacation, New Car"
-                  value={goalName}
-                  onChange={(e) => setGoalName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-goal-amount">Target Amount</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+        <Dialog open={newGoalOpen} onOpenChange={setNewGoalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Goal
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create a New Savings Goal</DialogTitle>
+              <DialogDescription>
+                Set up a new savings goal to help you save for something special.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleAddGoal}>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="goal-name">Goal Name</Label>
                   <Input
-                    id="edit-goal-amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="pl-8"
-                    value={goalAmount}
-                    onChange={(e) => setGoalAmount(e.target.value)}
+                    id="goal-name"
+                    placeholder="e.g., Dream Vacation, New Car"
+                    value={goalName}
+                    onChange={(e) => setGoalName(e.target.value)}
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-goal-category">Category</Label>
-                <select
-                  id="edit-goal-category"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  value={goalCategory}
-                  onChange={(e) => setGoalCategory(e.target.value)}
-                >
-                  <option value="Travel">Travel</option>
-                  <option value="Home">Home</option>
-                  <option value="Car">Car</option>
-                  <option value="Education">Education</option>
-                  <option value="Gift">Gift</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => handleDeleteGoal(currentGoalId)}
-                className="mr-auto"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Goal
-              </Button>
-              <Button type="submit">Update Goal</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Contribute Dialog */}
-      <Dialog open={contributeOpen} onOpenChange={setContributeOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Contribution</DialogTitle>
-            <DialogDescription>
-              Add money to your savings goal from an account or external source.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Tabs defaultValue="accounts">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="accounts">From Account</TabsTrigger>
-              <TabsTrigger value="external">External Source</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="accounts">
-              <div className="space-y-4 py-2">
                 <div className="space-y-2">
-                  <Label htmlFor="contribution-amount">Amount</Label>
+                  <Label htmlFor="goal-amount">Target Amount</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
                     <Input
-                      id="contribution-amount"
+                      id="goal-amount"
                       type="number"
-                      step="0.01"
                       placeholder="0.00"
                       className="pl-8"
-                      value={contributionAmount}
-                      onChange={(e) => setContributionAmount(e.target.value)}
+                      value={goalAmount}
+                      onChange={(e) => setGoalAmount(e.target.value)}
                     />
                   </div>
                 </div>
-                
                 <div className="space-y-2">
-                  <Label>Select Account</Label>
-                  <div className="space-y-2">
-                    {accounts.map(account => (
-                      <Card key={account.id} className="p-2">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium">{account.name}</p>
-                            <p className="text-sm text-muted-foreground">{formatCurrency(account.balance)} available</p>
-                          </div>
-                          <Button 
-                            onClick={(e) => handleAccountContribute(e, account.id, currentGoalId)}
-                            disabled={!contributionAmount || parseFloat(contributionAmount) <= 0}
-                          >
-                            Transfer
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
+                  <Label htmlFor="goal-category">Category</Label>
+                  <select
+                    id="goal-category"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={goalCategory}
+                    onChange={(e) => setGoalCategory(e.target.value)}
+                  >
+                    <option value="Travel">Travel</option>
+                    <option value="Home">Home</option>
+                    <option value="Car">Car</option>
+                    <option value="Education">Education</option>
+                    <option value="Gift">Gift</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="external">
-              <form onSubmit={handleContribute}>
-                <div className="space-y-4 py-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="external-contribution-amount">Amount</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                      <Input
-                        id="external-contribution-amount"
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        className="pl-8"
-                        value={contributionAmount}
-                        onChange={(e) => setContributionAmount(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit">Add Contribution</Button>
-                  </DialogFooter>
-                </div>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button type="submit">Create Goal</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-      {/* Auto-Transfer Dialog */}
-      <Dialog open={autoTransferOpen} onOpenChange={setAutoTransferOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Set Up Automatic Transfers</DialogTitle>
-            <DialogDescription>
-              Configure a recurring transfer to this savings goal.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSetupAutoTransfer}>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="auto-transfer-amount">Transfer Amount</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                  <Input
-                    id="auto-transfer-amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="pl-8"
-                    value={autoTransferAmount}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {goals.map(goal => (
+          <Card key={goal.id}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-md font-medium">
+                  {goal.name}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="rounded-full bg-muted p-1">
+                    {getGoalIcon(goal.category)}
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => openEditDialog(goal)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => handleDeleteGoal(goal.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <CardDescription>{goal.category}</CardDescription>
+              {goal.autoTransfer && (
+                <div className="flex items-center gap-1 text-xs text-green-600">
+                  <CalendarClock className="h-3 w-3" />
+                  <span>
+                    Auto: ${goal.autoTransfer.amount} {goal.autoTransfer.frequency}
+                  </span>
+                </div>
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <div className="flex justify-between mb-1 text-sm">
+                  <span>${goal.currentAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>${goal.targetAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <Progress value={goal.progress} className="h-2" />
+                <div className="mt-1 text-xs text-right text-muted-foreground">
+                  {goal.progress}% complete
+                </div>
+              </div>
+
+              <div className="text-sm text-muted-foreground">
+                ${(goal.targetAmount - goal.currentAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} remaining
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-2">
+              <div className="flex gap-2 w-full">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="default" 
+                      className="flex-1"
+                      onClick={() => openContributeDialog(goal)}
+                    >
+                      Add Funds
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Funds to {goal.name}</DialogTitle>
+                      <DialogDescription>
+                        How much would you like to contribute to this savings goal?
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleContribute}>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="contribution-amount">Amount</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                            <Input
+                              id="contribution-amount"
+                              type="number"
+                              placeholder="0.00"
+                              className="pl-8"
+                              value={contributionAmount}
+                              onChange={(e) => setContributionAmount(e.target.value)}
+                            />
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Remaining: ${(goal.targetAmount - goal.currentAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit">Add Contribution</Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => openTransferDialog(goal)}
+                    >
+                      <ArrowRightLeft className="h-4 w-4 mr-2" />
+                      Transfer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Transfer Funds to {goal.name}</DialogTitle>
+                      <DialogDescription>
+                        Transfer money from one of your accounts to this savings goal.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleTransfer}>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label>From Account</Label>
+                          <Select value={sourceAccount} onValueChange={setSourceAccount}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select account" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {mockAccounts.map(account => (
+                                <SelectItem key={account.id} value={account.id}>
+                                  {account.name} (${account.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 
