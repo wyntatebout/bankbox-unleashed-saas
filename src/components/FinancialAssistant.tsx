@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, X, Maximize2, Minimize2, Accessibility } from "lucide-react";
+import { Bot, Send, X, Maximize2, Minimize2, Accessibility, Lock, Unlock } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 
 const FinancialAssistant = () => {
   const { toast } = useToast();
@@ -80,9 +81,9 @@ const FinancialAssistant = () => {
     setInput("");
   };
 
-  const handleToggleAssistant = (checked: boolean) => {
-    setIsEnabled(checked);
-    if (checked) {
+  const handleToggleAssistant = () => {
+    setIsEnabled(!isEnabled);
+    if (!isEnabled) {
       toast({
         title: "Financial Assistant Enabled",
         description: "The assistant will now appear when needed."
@@ -208,13 +209,16 @@ const FinancialAssistant = () => {
                 </div>
               </PopoverContent>
             </Popover>
-            <div className="flex items-center space-x-1">
-              <Switch 
-                checked={isEnabled} 
-                onCheckedChange={handleToggleAssistant}
-                className="h-3.5"
-                aria-label="Enable or disable financial assistant"
-              />
+            <div className="flex items-center">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 ${highContrast ? 'text-white hover:bg-gray-800' : 'text-primary-foreground hover:bg-primary/80'}`}
+                onClick={handleToggleAssistant}
+                aria-label={isEnabled ? "Lock chat assistant" : "Unlock chat assistant"}
+              >
+                {isEnabled ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+              </Button>
             </div>
             <Button 
               variant="ghost" 
