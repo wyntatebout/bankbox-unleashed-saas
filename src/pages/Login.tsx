@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -40,7 +41,7 @@ const Login = () => {
   };
 
   const fillDemoCredentials = () => {
-    form.setValue("email", "demo@bankinabox.com");
+    form.setValue("email", "demo@aurorabank.com");
     form.setValue("password", "password123");
     setShowCredentials(true);
   };
@@ -92,7 +93,7 @@ const Login = () => {
               {showCredentials && (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-sm">
                   <p className="font-medium text-amber-800">Demo Credentials:</p>
-                  <p className="text-amber-700">Email: demo@bankinabox.com</p>
+                  <p className="text-amber-700">Email: demo@aurorabank.com</p>
                   <p className="text-amber-700">Password: password123</p>
                 </div>
               )}

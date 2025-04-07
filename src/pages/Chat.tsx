@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,7 +26,7 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      content: "Hello! I'm your Financial Assistant. How can I help you today?",
+      content: "Hello! I'm your Financial Assistant from Aurora Bank. How can I help you today?",
       sender: "assistant",
       timestamp: new Date(),
     },
@@ -124,7 +123,7 @@ const Chat = () => {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle className="text-lg">Financial Assistant</CardTitle>
+                  <CardTitle className="text-lg">Aurora Bank Assistant</CardTitle>
                   <div className="flex items-center">
                     <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
                     <span className="text-xs text-muted-foreground">Online</span>

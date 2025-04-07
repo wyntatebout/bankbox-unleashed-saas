@@ -7,7 +7,7 @@ import { toast } from "sonner";
 const DEMO_USERS = [
   {
     id: "usr_1",
-    email: "demo@bankinabox.com",
+    email: "demo@aurorabank.com",
     password: "password123",
     name: "John Doe",
     avatar: "https://github.com/shadcn.png",
@@ -15,7 +15,7 @@ const DEMO_USERS = [
   },
   {
     id: "usr_2",
-    email: "admin@bankinabox.com",
+    email: "admin@aurorabank.com",
     password: "admin123",
     name: "Admin User",
     avatar: "",
@@ -48,12 +48,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check for saved user in localStorage
-    const savedUser = localStorage.getItem("bankInABoxUser");
+    const savedUser = localStorage.getItem("auroraBank");
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
       } catch (e) {
-        localStorage.removeItem("bankInABoxUser");
+        localStorage.removeItem("auroraBank");
       }
     }
     setIsLoading(false);
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Remove password before storing
         const { password: _, ...userWithoutPassword } = foundUser;
         setUser(userWithoutPassword);
-        localStorage.setItem("bankInABoxUser", JSON.stringify(userWithoutPassword));
+        localStorage.setItem("auroraBank", JSON.stringify(userWithoutPassword));
         toast.success("Login successful!");
         navigate("/");
         return true;
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("bankInABoxUser");
+    localStorage.removeItem("auroraBank");
     toast.info("You've been logged out");
     navigate("/login");
   };

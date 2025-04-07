@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, X, Maximize2, Minimize2, Accessibility, Lock, Unlock } from "lucide-react";
+import { Bot, Send, X, Maximize2, Minimize2, UserRound, Lock, Unlock } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
@@ -46,9 +45,6 @@ const FinancialAssistant = () => {
 
   // Update state when enabled status changes
   useEffect(() => {
-    if (!isEnabled && isOpen) {
-      setIsOpen(false);
-    }
     localStorage.setItem("financialAssistantEnabled", isEnabled.toString());
   }, [isEnabled]);
 
@@ -83,16 +79,21 @@ const FinancialAssistant = () => {
 
   const handleToggleAssistant = () => {
     setIsEnabled(!isEnabled);
+    // Always show the chat button even when disabled
+    // Just don't auto-open the chat
+    
     if (!isEnabled) {
       toast({
         title: "Financial Assistant Enabled",
-        description: "The assistant will now appear when needed."
+        description: "The assistant is now available to chat."
       });
     } else {
       toast({
-        title: "Financial Assistant Disabled",
-        description: "The assistant will no longer appear automatically."
+        title: "Financial Assistant Locked",
+        description: "The assistant is now locked. Click the icon to unlock when needed."
       });
+      // Close the chat if it's open, but keep the button visible
+      setIsOpen(false);
     }
   };
 
@@ -110,174 +111,181 @@ const FinancialAssistant = () => {
     localStorage.setItem("accessibilityHighContrast", (!highContrast).toString());
   };
 
-  // If disabled, don't show the bot button either
-  if (!isEnabled && !isOpen) {
-    return null;
-  }
-
-  if (!isOpen) {
-    return (
-      <Button 
-        className="fixed bottom-4 right-4 rounded-full shadow-lg p-4 gradient-bg"
-        onClick={() => setIsOpen(true)}
-      >
-        <Bot className="h-6 w-6" />
-      </Button>
-    );
-  }
-
+  // Always show the button, but control the full chat visibility
   return (
     <>
-      <Card className={`fixed transition-all duration-300 shadow-lg ${
-        isMinimized 
-          ? 'bottom-4 right-4 w-auto h-auto' 
-          : 'bottom-4 right-4 w-80 md:w-96 h-[450px]'
-        } ${highContrast ? 'bg-black text-white border-white' : ''}`}>
-        <CardHeader className={`p-3 flex flex-row items-center justify-between ${highContrast ? 'bg-black text-white' : 'bg-primary text-primary-foreground'} rounded-t-lg`}>
-          <CardTitle className={`${fontSizeClass} font-medium flex items-center`}>
-            <Bot className="h-4 w-4 mr-2" />
-            Financial Assistant
-          </CardTitle>
-          <div className="flex items-center space-x-1">
-            <Popover>
-              <PopoverTrigger asChild>
+      {!isOpen && (
+        <Button 
+          className="fixed bottom-4 right-4 rounded-full shadow-lg p-4 gradient-bg"
+          onClick={() => {
+            // If disabled, enable it first when they click the button
+            if (!isEnabled) {
+              setIsEnabled(true);
+              toast({
+                title: "Financial Assistant Unlocked",
+                description: "The assistant is now ready to help you."
+              });
+              localStorage.setItem("financialAssistantEnabled", "true");
+            }
+            setIsOpen(true);
+          }}
+        >
+          <Bot className="h-6 w-6" />
+        </Button>
+      )}
+
+      {isOpen && (
+        <Card className={`fixed transition-all duration-300 shadow-lg ${
+          isMinimized 
+            ? 'bottom-4 right-4 w-auto h-auto' 
+            : 'bottom-4 right-4 w-80 md:w-96 h-[450px]'
+          } ${highContrast ? 'bg-black text-white border-white' : ''}`}>
+          <CardHeader className={`p-3 flex flex-row items-center justify-between ${highContrast ? 'bg-black text-white' : 'bg-primary text-primary-foreground'} rounded-t-lg`}>
+            <CardTitle className={`${fontSizeClass} font-medium flex items-center`}>
+              <Bot className="h-4 w-4 mr-2" />
+              Financial Assistant
+            </CardTitle>
+            <div className="flex items-center space-x-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={`h-6 w-6 ${highContrast ? 'text-white hover:bg-gray-800' : 'text-primary-foreground hover:bg-primary/80'}`}
+                    aria-label="Accessibility options"
+                  >
+                    <UserRound className="h-3 w-3" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium leading-none">Accessibility Options</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Customize your assistant for better accessibility.
+                      </p>
+                    </div>
+                    <div className="grid gap-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <label htmlFor="high-contrast" className="text-sm font-medium leading-none">
+                            High Contrast
+                          </label>
+                          <p className="text-xs text-muted-foreground">
+                            Increase contrast for better visibility
+                          </p>
+                        </div>
+                        <Switch 
+                          id="high-contrast" 
+                          checked={highContrast} 
+                          onCheckedChange={toggleHighContrast} 
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium leading-none">
+                          Text Size
+                        </label>
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => changeFontSize("text-xs")}
+                            className={fontSizeClass === "text-xs" ? "bg-primary text-primary-foreground" : ""}
+                          >
+                            Small
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => changeFontSize("text-sm")}
+                            className={fontSizeClass === "text-sm" ? "bg-primary text-primary-foreground" : ""}
+                          >
+                            Medium
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => changeFontSize("text-base")}
+                            className={fontSizeClass === "text-base" ? "bg-primary text-primary-foreground" : ""}
+                          >
+                            Large
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <div className="flex items-center">
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   className={`h-6 w-6 ${highContrast ? 'text-white hover:bg-gray-800' : 'text-primary-foreground hover:bg-primary/80'}`}
-                  aria-label="Accessibility options"
+                  onClick={handleToggleAssistant}
+                  aria-label={isEnabled ? "Lock chat assistant" : "Unlock chat assistant"}
                 >
-                  <Accessibility className="h-3 w-3" />
+                  {isEnabled ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Accessibility Options</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Customize your assistant for better accessibility.
-                    </p>
-                  </div>
-                  <div className="grid gap-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <label htmlFor="high-contrast" className="text-sm font-medium leading-none">
-                          High Contrast
-                        </label>
-                        <p className="text-xs text-muted-foreground">
-                          Increase contrast for better visibility
-                        </p>
-                      </div>
-                      <Switch 
-                        id="high-contrast" 
-                        checked={highContrast} 
-                        onCheckedChange={toggleHighContrast} 
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium leading-none">
-                        Text Size
-                      </label>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => changeFontSize("text-xs")}
-                          className={fontSizeClass === "text-xs" ? "bg-primary text-primary-foreground" : ""}
-                        >
-                          Small
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => changeFontSize("text-sm")}
-                          className={fontSizeClass === "text-sm" ? "bg-primary text-primary-foreground" : ""}
-                        >
-                          Medium
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => changeFontSize("text-base")}
-                          className={fontSizeClass === "text-base" ? "bg-primary text-primary-foreground" : ""}
-                        >
-                          Large
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <div className="flex items-center">
+              </div>
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className={`h-6 w-6 ${highContrast ? 'text-white hover:bg-gray-800' : 'text-primary-foreground hover:bg-primary/80'}`}
-                onClick={handleToggleAssistant}
-                aria-label={isEnabled ? "Lock chat assistant" : "Unlock chat assistant"}
+                onClick={() => setIsMinimized(!isMinimized)}
               >
-                {isEnabled ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                {isMinimized ? <Maximize2 className="h-3 w-3" /> : <Minimize2 className="h-3 w-3" />}
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 ${highContrast ? 'text-white hover:bg-gray-800' : 'text-primary-foreground hover:bg-primary/80'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                <X className="h-3 w-3" />
               </Button>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-6 w-6 ${highContrast ? 'text-white hover:bg-gray-800' : 'text-primary-foreground hover:bg-primary/80'}`}
-              onClick={() => setIsMinimized(!isMinimized)}
-            >
-              {isMinimized ? <Maximize2 className="h-3 w-3" /> : <Minimize2 className="h-3 w-3" />}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-6 w-6 ${highContrast ? 'text-white hover:bg-gray-800' : 'text-primary-foreground hover:bg-primary/80'}`}
-              onClick={() => setIsOpen(false)}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        </CardHeader>
-        
-        {!isMinimized && (
-          <>
-            <CardContent className={`p-3 overflow-y-auto h-[340px] ${highContrast ? 'bg-black' : ''}`}>
-              <div className="space-y-4">
-                {conversation.map((message, index) => (
-                  <div 
-                    key={index}
-                    className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"}`}
-                  >
+          </CardHeader>
+          
+          {!isMinimized && (
+            <>
+              <CardContent className={`p-3 overflow-y-auto h-[340px] ${highContrast ? 'bg-black' : ''}`}>
+                <div className="space-y-4">
+                  {conversation.map((message, index) => (
                     <div 
-                      className={`max-w-[80%] rounded-lg p-3 ${fontSizeClass} ${
-                        message.role === "assistant" 
-                          ? highContrast ? "bg-gray-800 text-white" : "bg-muted text-foreground" 
-                          : highContrast ? "bg-blue-800 text-white" : "bg-primary text-primary-foreground"
-                      }`}
+                      key={index}
+                      className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"}`}
                     >
-                      {message.content}
+                      <div 
+                        className={`max-w-[80%] rounded-lg p-3 ${fontSizeClass} ${
+                          message.role === "assistant" 
+                            ? highContrast ? "bg-gray-800 text-white" : "bg-muted text-foreground" 
+                            : highContrast ? "bg-blue-800 text-white" : "bg-primary text-primary-foreground"
+                        }`}
+                      >
+                        {message.content}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-            
-            <CardFooter className={`p-3 pt-0 ${highContrast ? 'bg-black' : ''}`}>
-              <form onSubmit={handleSubmit} className="flex w-full gap-2">
-                <Input
-                  placeholder="Ask about your finances..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  className={`flex-1 ${highContrast ? 'bg-gray-800 text-white border-white' : ''}`}
-                />
-                <Button type="submit" size="icon" className={highContrast ? 'bg-blue-800 hover:bg-blue-700' : 'gradient-bg'}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
-            </CardFooter>
-          </>
-        )}
-      </Card>
+                  ))}
+                </div>
+              </CardContent>
+              
+              <CardFooter className={`p-3 pt-0 ${highContrast ? 'bg-black' : ''}`}>
+                <form onSubmit={handleSubmit} className="flex w-full gap-2">
+                  <Input
+                    placeholder="Ask about your finances..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    className={`flex-1 ${highContrast ? 'bg-gray-800 text-white border-white' : ''}`}
+                  />
+                  <Button type="submit" size="icon" className={highContrast ? 'bg-blue-800 hover:bg-blue-700' : 'gradient-bg'}>
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </form>
+              </CardFooter>
+            </>
+          )}
+        </Card>
+      )}
 
       <Dialog open={isAccessibilityDialogOpen} onOpenChange={setIsAccessibilityDialogOpen}>
         <DialogContent>
