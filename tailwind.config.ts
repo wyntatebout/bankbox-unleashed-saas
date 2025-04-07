@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,22 +62,21 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Banking theme colors
 				bank: {
-					primary: '#1A73E8',
-					secondary: '#34A853',
-					accent: '#00C2FF',
-					warning: '#FBBC05',
-					error: '#EA4335',
-					success: '#0F9D58',
+					primary: '#0052CC',
+					secondary: '#FFD700',
+					accent: '#FF0000',
+					warning: '#FFC107',
+					error: '#FF0000',
+					success: '#28A745',
 					dark: '#1E293B',
-					light: '#F8FAFC',
+					light: '#FFFFFF',
 					card: {
 						bg: '#FFFFFF',
 						border: '#E2E8F0'
 					},
 					gradient: {
-						primary: 'linear-gradient(135deg, #1A73E8 0%, #6C92F4 100%)',
+						primary: 'linear-gradient(135deg, #0052CC 0%, #4B9BFF 100%)'
 					}
 				}
 			},
