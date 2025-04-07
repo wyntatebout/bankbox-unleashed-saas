@@ -3,21 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
-import {
-  LayoutDashboard,
-  CreditCard,
-  PiggyBank,
-  BarChart2,
-  Send,
-  Settings,
-  Menu,
-  X,
-  HelpCircle,
-  MessageSquare,
-  Bell,
-} from "lucide-react";
+import { LayoutDashboard, CreditCard, PiggyBank, BarChart2, Send, Settings, Menu, X, HelpCircle, MessageSquare, Bell } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 interface SidebarLinkProps {
   href: string;
   icon: React.ReactNode;
@@ -25,89 +12,55 @@ interface SidebarLinkProps {
   isActive?: boolean;
   onClick?: () => void;
 }
-
 const SidebarLink = ({
   href,
   icon,
   label,
   isActive,
-  onClick,
+  onClick
 }: SidebarLinkProps) => {
-  return (
-    <Link to={href} onClick={onClick}>
-      <Button
-        variant="ghost"
-        className={cn(
-          "w-full justify-start gap-2 mb-1 font-normal text-sidebar-foreground hover:text-white hover:bg-sidebar-accent",
-          isActive && "bg-sidebar-accent text-white"
-        )}
-      >
+  return <Link to={href} onClick={onClick}>
+      <Button variant="ghost" className={cn("w-full justify-start gap-2 mb-1 font-normal text-sidebar-foreground hover:text-white hover:bg-sidebar-accent", isActive && "bg-sidebar-accent text-white")}>
         {icon}
         {label}
       </Button>
-    </Link>
-  );
+    </Link>;
 };
-
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
-
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
-
   const closeSidebar = () => {
     if (isMobile) {
       setIsOpen(false);
     }
   };
-
   const isActive = (path: string) => {
     if (path === "/") {
       return location.pathname === path;
     }
     return location.pathname.startsWith(path);
   };
-
-  return (
-    <>
+  return <>
       {/* Mobile Toggle Button */}
-      {isMobile && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="fixed left-4 top-4 z-50 lg:hidden"
-          onClick={toggleSidebar}
-        >
+      {isMobile && <Button variant="outline" size="icon" className="fixed left-4 top-4 z-50 lg:hidden" onClick={toggleSidebar}>
           <Menu className="h-5 w-5" />
-        </Button>
-      )}
+        </Button>}
 
       {/* Sidebar */}
-      <div
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out bg-sidebar lg:translate-x-0",
-          {
-            "-translate-x-full": isMobile && !isOpen,
-            "translate-x-0": !isMobile || isOpen,
-          }
-        )}
-      >
+      <div className={cn("fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out bg-sidebar lg:translate-x-0", {
+      "-translate-x-full": isMobile && !isOpen,
+      "translate-x-0": !isMobile || isOpen
+    })}>
         {/* Close Button (Mobile Only) */}
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4 text-white"
-            onClick={toggleSidebar}
-          >
+        {isMobile && <Button variant="ghost" size="icon" className="absolute right-4 top-4 text-white" onClick={toggleSidebar}>
             <X className="h-5 w-5" />
-          </Button>
-        )}
+          </Button>}
 
-        <div className="flex flex-col h-full p-4">
+        <div className="flex flex-col h-full p-4 bg-blue-950">
           {/* Brand Logo */}
           <div className="flex items-center justify-center mb-8 mt-4">
             <div className="bg-white rounded-lg p-1.5">
@@ -123,80 +76,26 @@ const Sidebar = () => {
               <h2 className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
                 Main
               </h2>
-              <SidebarLink
-                href="/"
-                icon={<LayoutDashboard className="h-5 w-5" />}
-                label="Dashboard"
-                isActive={isActive("/")}
-                onClick={closeSidebar}
-              />
-              <SidebarLink
-                href="/accounts"
-                icon={<CreditCard className="h-5 w-5" />}
-                label="Accounts"
-                isActive={isActive("/accounts")}
-                onClick={closeSidebar}
-              />
-              <SidebarLink
-                href="/transfers"
-                icon={<Send className="h-5 w-5" />}
-                label="Transfers"
-                isActive={isActive("/transfers")}
-                onClick={closeSidebar}
-              />
-              <SidebarLink
-                href="/savings"
-                icon={<PiggyBank className="h-5 w-5" />}
-                label="Savings"
-                isActive={isActive("/savings")}
-                onClick={closeSidebar}
-              />
-              <SidebarLink
-                href="/insights"
-                icon={<BarChart2 className="h-5 w-5" />}
-                label="Insights"
-                isActive={isActive("/insights")}
-                onClick={closeSidebar}
-              />
+              <SidebarLink href="/" icon={<LayoutDashboard className="h-5 w-5" />} label="Dashboard" isActive={isActive("/")} onClick={closeSidebar} />
+              <SidebarLink href="/accounts" icon={<CreditCard className="h-5 w-5" />} label="Accounts" isActive={isActive("/accounts")} onClick={closeSidebar} />
+              <SidebarLink href="/transfers" icon={<Send className="h-5 w-5" />} label="Transfers" isActive={isActive("/transfers")} onClick={closeSidebar} />
+              <SidebarLink href="/savings" icon={<PiggyBank className="h-5 w-5" />} label="Savings" isActive={isActive("/savings")} onClick={closeSidebar} />
+              <SidebarLink href="/insights" icon={<BarChart2 className="h-5 w-5" />} label="Insights" isActive={isActive("/insights")} onClick={closeSidebar} />
             </div>
 
             <div className="space-y-1">
               <h2 className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
                 Support
               </h2>
-              <SidebarLink
-                href="/help"
-                icon={<HelpCircle className="h-5 w-5" />}
-                label="Help Center"
-                isActive={isActive("/help")}
-                onClick={closeSidebar}
-              />
-              <SidebarLink
-                href="/chat"
-                icon={<MessageSquare className="h-5 w-5" />}
-                label="Financial Assistant"
-                isActive={isActive("/chat")}
-                onClick={closeSidebar}
-              />
-              <SidebarLink
-                href="/notifications"
-                icon={<Bell className="h-5 w-5" />}
-                label="Notifications"
-                isActive={isActive("/notifications")}
-                onClick={closeSidebar}
-              />
+              <SidebarLink href="/help" icon={<HelpCircle className="h-5 w-5" />} label="Help Center" isActive={isActive("/help")} onClick={closeSidebar} />
+              <SidebarLink href="/chat" icon={<MessageSquare className="h-5 w-5" />} label="Financial Assistant" isActive={isActive("/chat")} onClick={closeSidebar} />
+              <SidebarLink href="/notifications" icon={<Bell className="h-5 w-5" />} label="Notifications" isActive={isActive("/notifications")} onClick={closeSidebar} />
             </div>
           </div>
 
           {/* Settings & User */}
           <div>
-            <SidebarLink
-              href="/settings"
-              icon={<Settings className="h-5 w-5" />}
-              label="Settings"
-              isActive={isActive("/settings")}
-              onClick={closeSidebar}
-            />
+            <SidebarLink href="/settings" icon={<Settings className="h-5 w-5" />} label="Settings" isActive={isActive("/settings")} onClick={closeSidebar} />
             <div className="mt-4 border-t border-sidebar-border pt-4">
               <UserAvatar />
             </div>
@@ -205,14 +104,7 @@ const Sidebar = () => {
       </div>
 
       {/* Overlay for mobile */}
-      {isMobile && isOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-          onClick={toggleSidebar}
-        />
-      )}
-    </>
-  );
+      {isMobile && isOpen && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={toggleSidebar} />}
+    </>;
 };
-
 export default Sidebar;
