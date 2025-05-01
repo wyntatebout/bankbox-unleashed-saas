@@ -1,111 +1,146 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import UserAvatar from "@/components/UserAvatar";
-import { LayoutDashboard, CreditCard, PiggyBank, BarChart2, Send, Settings, Menu, X, HelpCircle, MessageSquare, Bell } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-
-interface SidebarLinkProps {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  isActive?: boolean;
-  onClick?: () => void;
-}
-
-const SidebarLink = ({
-  href,
-  icon,
-  label,
-  isActive,
-  onClick
-}: SidebarLinkProps) => {
-  return <Link to={href} onClick={onClick}>
-      <Button variant="ghost" className={cn("w-full justify-start gap-2 mb-1 font-normal text-sidebar-foreground hover:text-white hover:bg-sidebar-accent", isActive && "bg-sidebar-accent text-white")}>
-        {icon}
-        {label}
-      </Button>
-    </Link>;
-};
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Home, LayoutDashboard, CreditCard, ArrowLeftRight, PiggyBank, BarChart3, HelpCircle, MessageSquare, Bell, Settings, LogOut, FileText } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useIsMobile();
-  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { pathname } = useLocation();
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
+  const navigationItems = [
+    { name: "Dashboard", href: "/", icon: LayoutDashboard, current: pathname === "/" },
+    { name: "Accounts", href: "/accounts", icon: CreditCard, current: pathname === "/accounts" },
+    { name: "Transfers", href: "/transfers", icon: ArrowLeftRight, current: pathname === "/transfers" },
+    { name: "Savings", href: "/savings", icon: PiggyBank, current: pathname === "/savings" },
+    { name: "Insights", href: "/insights", icon: BarChart3, current: pathname === "/insights" },
+    { name: "Help Center", href: "/help", icon: HelpCircle, current: pathname === "/help" },
+    { name: "Legal", href: "/legal", icon: FileText, current: pathname === "/legal" },
+  ];
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
-  const closeSidebar = () => {
-    if (isMobile) {
-      setIsOpen(false);
-    }
-  };
-
-  const isActive = (path: string) => {
-    if (path === "/") {
-      return location.pathname === path;
-    }
-    return location.pathname.startsWith(path);
-  };
-
-  return <>
-      {isMobile && <Button variant="outline" size="icon" className="fixed left-4 top-4 z-50 lg:hidden" onClick={toggleSidebar}>
-          <Menu className="h-5 w-5" />
-        </Button>}
-
-      <div className={cn("fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out bg-sidebar lg:translate-x-0", {
-      "-translate-x-full": isMobile && !isOpen,
-      "translate-x-0": !isMobile || isOpen
-    })}>
-        {isMobile && <Button variant="ghost" size="icon" className="absolute right-4 top-4 text-white" onClick={toggleSidebar}>
-            <X className="h-5 w-5" />
-          </Button>}
-
-        <div className="flex flex-col h-full p-4 bg-blue-950">
-          <div className="flex items-center justify-center mb-8 mt-4">
-            <div className="bg-white rounded-lg p-1.5">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text">
-                Aurora Bank
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex-1 space-y-6">
-            <div className="space-y-1">
-              <h2 className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
-                Main
-              </h2>
-              <SidebarLink href="/" icon={<LayoutDashboard className="h-5 w-5" />} label="Dashboard" isActive={isActive("/")} onClick={closeSidebar} />
-              <SidebarLink href="/accounts" icon={<CreditCard className="h-5 w-5" />} label="Accounts" isActive={isActive("/accounts")} onClick={closeSidebar} />
-              <SidebarLink href="/transfers" icon={<Send className="h-5 w-5" />} label="Transfers" isActive={isActive("/transfers")} onClick={closeSidebar} />
-              <SidebarLink href="/savings" icon={<PiggyBank className="h-5 w-5" />} label="Savings" isActive={isActive("/savings")} onClick={closeSidebar} />
-              <SidebarLink href="/insights" icon={<BarChart2 className="h-5 w-5" />} label="Insights" isActive={isActive("/insights")} onClick={closeSidebar} />
-            </div>
-
-            <div className="space-y-1">
-              <h2 className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
-                Support
-              </h2>
-              <SidebarLink href="/help" icon={<HelpCircle className="h-5 w-5" />} label="Help Center" isActive={isActive("/help")} onClick={closeSidebar} />
-              <SidebarLink href="/chat" icon={<MessageSquare className="h-5 w-5" />} label="Financial Assistant" isActive={isActive("/chat")} onClick={closeSidebar} />
-              <SidebarLink href="/notifications" icon={<Bell className="h-5 w-5" />} label="Notifications" isActive={isActive("/notifications")} onClick={closeSidebar} />
-            </div>
-          </div>
-
-          <div>
-            <SidebarLink href="/settings" icon={<Settings className="h-5 w-5" />} label="Settings" isActive={isActive("/settings")} onClick={closeSidebar} />
-            <div className="mt-4 border-t border-sidebar-border pt-4">
-              <UserAvatar />
-            </div>
-          </div>
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="fixed left-0 top-0 z-50 hidden h-full w-64 flex-col border-r bg-secondary lg:flex">
+        <div className="flex items-center justify-center py-4">
+          <Link to="/" className="flex items-center space-x-2">
+            <Home className="h-6 w-6 text-primary" />
+            <span className="font-bold text-2xl">Aurora Bank</span>
+          </Link>
         </div>
-      </div>
+        <nav className="flex-1 space-y-1 p-2">
+          {navigationItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={`flex items-center space-x-2 rounded-md p-2 hover:bg-muted ${item.current ? "bg-muted font-medium" : ""}`}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.name}</span>
+            </Link>
+          ))}
+        </nav>
+        <div className="border-t p-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex h-8 w-full items-center justify-between rounded-md">
+                <div className="flex items-center space-x-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} alt={user?.name} />
+                    <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{user?.name}</span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/settings")}>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/notifications")}>Notifications</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </aside>
 
-      {isMobile && isOpen && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={toggleSidebar} />}
-    </>;
+      {/* Mobile Sidebar */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="lg:hidden">
+            <LayoutDashboard className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-64">
+          <SheetHeader className="text-left">
+            <SheetTitle>Aurora Bank</SheetTitle>
+            <SheetDescription>
+              Navigate through your banking options.
+            </SheetDescription>
+          </SheetHeader>
+          <nav className="flex-1 space-y-1 p-2">
+            {navigationItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`flex items-center space-x-2 rounded-md p-2 hover:bg-muted ${item.current ? "bg-muted font-medium" : ""}`}
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            ))}
+          </nav>
+          <div className="border-t p-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex h-8 w-full items-center justify-between rounded-md">
+                  <div className="flex items-center space-x-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} alt={user?.name} />
+                      <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{user?.name}</span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/settings")}>Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/notifications")}>Notifications</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
 };
 
 export default Sidebar;

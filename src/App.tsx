@@ -15,6 +15,7 @@ import Transfers from "./pages/Transfers";
 import Savings from "./pages/Savings";
 import Insights from "./pages/Insights";
 import HelpCenter from "./pages/HelpCenter";
+import Legal from "./pages/Legal";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
 
@@ -50,6 +51,7 @@ const AuthWrapper = () => {
         <Route path="savings" element={<Savings />} />
         <Route path="insights" element={<Insights />} />
         <Route path="help" element={<HelpCenter />} />
+        <Route path="legal" element={<Legal />} />
         <Route path="chat" element={<Chat />} />
         <Route path="notifications" element={<Notifications />} />
       </Route>
