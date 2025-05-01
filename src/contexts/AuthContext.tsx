@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-// Mock user data
+// Mock user data with corrected credentials
 const DEMO_USERS = [
   {
     id: "usr_1",
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for saved user in localStorage
+    // Check for saved user in localStorage with updated key
     const savedUser = localStorage.getItem("auroraBank");
     if (savedUser) {
       try {
@@ -65,8 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     try {
       // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Ensure case-insensitive email comparison and exact password matching
       const foundUser = DEMO_USERS.find(
         u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
       );
@@ -83,6 +84,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast.error("Invalid email or password");
         return false;
       }
+    } catch (error) {
+      toast.error("Login failed. Please try again.");
+      console.error("Login error:", error);
+      return false;
     } finally {
       setIsLoading(false);
     }

@@ -37,6 +37,7 @@ const Login = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
+    console.log("Login attempt with:", data.email, data.password);
     await login(data.email, data.password);
   };
 
