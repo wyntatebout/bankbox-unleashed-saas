@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, FileCsv, FileJson, FileSpreadsheet, FilePdf } from "lucide-react";
+import { Download, FileText, Files, File } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ExportOptionsProps {
@@ -46,10 +46,10 @@ const ExportOptions = ({
 
   const getExportTypeIcon = () => {
     switch(exportFormat) {
-      case "pdf": return <FilePdf className="h-4 w-4" />;
-      case "csv": return <FileCsv className="h-4 w-4" />;
-      case "json": return <FileJson className="h-4 w-4" />;
-      case "excel": return <FileSpreadsheet className="h-4 w-4" />;
+      case "pdf": return <File className="h-4 w-4" />;
+      case "csv": return <Files className="h-4 w-4" />;
+      case "json": return <FileText className="h-4 w-4" />;
+      case "excel": return <Files className="h-4 w-4" />;
       default: return <FileText className="h-4 w-4" />;
     }
   };
@@ -87,7 +87,7 @@ const ExportOptions = ({
                 }`}
               >
                 <RadioGroupItem value="pdf" id="format-pdf" className="sr-only" />
-                <FilePdf className="mb-2 h-6 w-6" />
+                <File className="mb-2 h-6 w-6" />
                 <span>PDF Document</span>
               </Label>
               <Label
@@ -97,7 +97,7 @@ const ExportOptions = ({
                 }`}
               >
                 <RadioGroupItem value="csv" id="format-csv" className="sr-only" />
-                <FileCsv className="mb-2 h-6 w-6" />
+                <Files className="mb-2 h-6 w-6" />
                 <span>CSV File</span>
               </Label>
               <Label
@@ -107,7 +107,7 @@ const ExportOptions = ({
                 }`}
               >
                 <RadioGroupItem value="excel" id="format-excel" className="sr-only" />
-                <FileSpreadsheet className="mb-2 h-6 w-6" />
+                <Files className="mb-2 h-6 w-6" />
                 <span>Excel Spreadsheet</span>
               </Label>
               <Label
@@ -117,7 +117,7 @@ const ExportOptions = ({
                 }`}
               >
                 <RadioGroupItem value="json" id="format-json" className="sr-only" />
-                <FileJson className="mb-2 h-6 w-6" />
+                <FileText className="mb-2 h-6 w-6" />
                 <span>JSON Data</span>
               </Label>
             </RadioGroup>
