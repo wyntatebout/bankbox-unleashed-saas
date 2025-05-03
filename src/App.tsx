@@ -18,6 +18,7 @@ import HelpCenter from "./pages/HelpCenter";
 import Legal from "./pages/Legal";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
+import BankingFeatures from "./pages/BankingFeatures";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const AuthWrapper = () => {
         <Route path="legal" element={<Legal />} />
         <Route path="chat" element={<Chat />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="features" element={<BankingFeatures />} />
       </Route>
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
