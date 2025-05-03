@@ -43,7 +43,7 @@ const Login = () => {
 
   const fillDemoCredentials = () => {
     form.setValue("email", "demo@aurorabank.com");
-    form.setValue("password", "password123");
+    form.setValue("password", "demo123");
     setShowCredentials(true);
   };
 
@@ -95,7 +95,7 @@ const Login = () => {
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-sm">
                   <p className="font-medium text-amber-800">Demo Credentials:</p>
                   <p className="text-amber-700">Email: demo@aurorabank.com</p>
-                  <p className="text-amber-700">Password: password123</p>
+                  <p className="text-amber-700">Password: demo123</p>
                 </div>
               )}
 

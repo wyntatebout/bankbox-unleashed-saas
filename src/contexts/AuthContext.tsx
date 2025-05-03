@@ -1,14 +1,13 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-// Mock user data with corrected credentials
+// Updated demo user credentials
 const DEMO_USERS = [
   {
     id: "usr_1",
     email: "demo@aurorabank.com",
-    password: "password123",
+    password: "demo123",
     name: "John Doe",
     avatar: "https://github.com/shadcn.png",
     accountType: "Premium",
