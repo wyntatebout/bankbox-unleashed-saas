@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   BarChart3, 
   CreditCard, 
@@ -31,7 +31,7 @@ export type NavItem = {
 
 const Sidebar = () => {
   const { logout } = useAuth();
-  const { isMobile } = useMobile();
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(!isMobile);
   const [isPending, startTransition] = useState(false);
 
