@@ -5,3 +5,11 @@ compatibility_flags = ["nodejs_compat"]
 
 [site]
 bucket = "./dist"
+
+# Explicitly define assets configuration
+[build]
+command = "npm run build"
+
+# Ensure proper asset handling
+[assets]
+directory = "./dist"
