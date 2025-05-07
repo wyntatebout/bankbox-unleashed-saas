@@ -1,15 +1,14 @@
 
 name = "aurora-bank"
-compatibility_date = "2023-10-30"
+main = "./dist/index.js"  # Explicit entry point
+compatibility_date = "2025-05-08"  # Updated to current date
 compatibility_flags = ["nodejs_compat"]
 
-[site]
-bucket = "./dist"
-
-# Explicitly define assets configuration
 [build]
 command = "npm run build"
+upload_dir = "dist"  # Replaces [site] section for Pages
 
-# Ensure proper asset handling
-[assets]
-directory = "./dist"
+# For static assets (CSS, images, etc.)
+[[rules]]
+globs = ["**/*.css", "**/*.png", "**/*.jpg"]
+type = "ESModule"
