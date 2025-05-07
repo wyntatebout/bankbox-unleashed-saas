@@ -25,5 +25,13 @@ export default defineConfig(({ mode }) => ({
     target: "esnext",
     outDir: "dist",
     assetsDir: "assets",
+    rollupOptions: {
+      // Explicitly mark these packages as external if needed
+      // or ensure they are properly bundled
+      external: [],
+    }
   },
+  optimizeDeps: {
+    include: ['jspdf', 'jspdf-autotable'],
+  }
 }));
